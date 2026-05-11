@@ -58,30 +58,53 @@ namespace MyFirstAPI.Controllers
                 return BadRequest("Student object is null");
             }
 
-            _getStudents.students.Add(student);
+            if (_getStudents.AddStudent(student) != null)
+            {
+                return CreatedAtAction(nameof(GetStudentById), new { stdId = student.Id }, student);
+            }
+            return BadRequest("Failed to add Student");
 
-            return CreatedAtAction(nameof(GetStudentById), new { stdId = student.Id }, student);
+
         }
         [HttpPut("{studentId}")]
         public ActionResult UpdateStudent(int studentId, Students student)
         {
-            if(student==null)
+            if (student == null)
             {
                 return BadRequest("Invalid Student data");
             }
             var getStudentRecord = _getStudents.GetStudentById(studentId);
-            if (getStudentRecord==null)
+            if (getStudentRecord == null)
             {
                 return NotFound($"No Student found with {studentId}");
             }
-            
-              getStudentRecord.Name=student.Name;  
-              getStudentRecord.Id=student.Id;
-              getStudentRecord.Gpa=student.Gpa;
-            
-            return NoContent();
-            
+            if (getStudentRecord.Id != student.Id)
+            {
+                return BadRequest("Student Id does not match with the Record");
+            }
 
+            getStudentRecord.Name = student.Name;
+            getStudentRecord.Id = student.Id;
+            getStudentRecord.Gpa = student.Gpa;
+
+            return NoContent();
+
+
+        }
+        [HttpDelete("{id}")]
+        public ActionResult DeleteStudent(int id)
+        {
+            var deletedStudent = _getStudents.RemoveStudent(id);   
+            if (deletedStudent == null)
+            {
+                return NotFound($"Student with ID {id} not found");
+            }
+
+            return Ok(new
+            {
+                Message = "Student deleted successfully",
+                DeletedStudent = deletedStudent
+            });
         }
 
     }

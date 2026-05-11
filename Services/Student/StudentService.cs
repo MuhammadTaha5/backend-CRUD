@@ -24,8 +24,8 @@ namespace MyFirstAPI.Services
                 },
                 new Students
                 {
-                    Id = 020,
-                    Name = "Abeera",
+                    Id = 19,
+                    Name = "Abdullah",
                     Gpa = 3.44
 
                 }
@@ -47,5 +47,22 @@ namespace MyFirstAPI.Services
         {
             return students;
         }
+        public Students AddStudent(Students std)
+        {
+            students.Add(std);
+            return std;
+        }
+        public Students RemoveStudent(int id)
+        {
+            var getStudentRecord = GetStudentById(id);
+            if (getStudentRecord==null)
+            {
+                return null;
+            }
+            students.Remove(getStudentRecord);
+            return getStudentRecord;
+        }
+
+        
     }
 }
