@@ -1,0 +1,34 @@
+## Ignore Visual Studio temporary files
+.vs/
+
+## Build results
+bin/
+obj/
+
+## User-specific files
+*.user
+*.rsuser
+*.suo
+
+## Rider
+.idea/
+
+## VS Code
+.vscode/
+
+## Logs
+*.log
+
+## ASP.NET Core
+appsettings.Development.json
+
+## Publish output
+publish/
+
+## NuGet
+*.nupkg
+packages/
+
+## OS generated files
+Thumbs.db
+.DS_Store
