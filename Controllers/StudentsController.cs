@@ -7,22 +7,22 @@ namespace MyFirstAPI.Controllers
     [Route("api/[controller]")]
     public class StudentsController : ControllerBase
     {
-        private StudentService _getStudents;
-        public StudentsController(StudentService getStudents)
+        private StudentService _studentService;
+        public StudentsController(StudentService studentService)
         {
-            _getStudents = getStudents;
+            _studentService = studentService;
         }
         [HttpGet]
         public ActionResult<List<Models.Students>> GetStudents()
         {
-            var studentsRecord = _getStudents.GetAllStundents();
+            var studentsRecord = _studentService.GetAllStundents();
 
             return Ok(studentsRecord);
         }
         [HttpGet("{stdId}")]
         public ActionResult GetStudentById(int stdId)
         {
-            var studentsRecord = _getStudents.GetStudentById(stdId);
+            var studentsRecord = _studentService.GetStudentById(stdId);
             if (studentsRecord == null)
             {
                 return NotFound("No record found");
@@ -40,7 +40,7 @@ namespace MyFirstAPI.Controllers
             if (name != null)
             {
                 Console.WriteLine("Name: " + name);
-                var studentRecord = _getStudents.GetStudentById(id);
+                var studentRecord = _studentService.GetStudentById(id);
                 if (studentRecord == null)
                 {
                     return NotFound($"No User Found {name}");
@@ -58,7 +58,7 @@ namespace MyFirstAPI.Controllers
                 return BadRequest("Student object is null");
             }
 
-            if (_getStudents.AddStudent(student) != null)
+            if (_studentService.AddStudent(student) != null)
             {
                 return CreatedAtAction(nameof(GetStudentById), new { stdId = student.Id }, student);
             }
@@ -71,30 +71,30 @@ namespace MyFirstAPI.Controllers
         {
             if (student == null)
             {
-                return BadRequest("Invalid Student data");
-            }
-            var getStudentRecord = _getStudents.GetStudentById(studentId);
-            if (getStudentRecord == null)
-            {
-                return NotFound($"No Student found with {studentId}");
-            }
-            if (getStudentRecord.Id != student.Id)
-            {
-                return BadRequest("Student Id does not match with the Record");
+                return BadRequest("Student data is required.");
             }
 
-            getStudentRecord.Name = student.Name;
-            getStudentRecord.Id = student.Id;
-            getStudentRecord.Gpa = student.Gpa;
+         
+            if (studentId != student.Id)
+            {
+                return BadRequest("Student ID mismatch.");
+            }
 
+            var updatedStudent = _studentService.UpdateStudent(studentId, student);
+
+
+            if (updatedStudent == null)
+            {
+                return NotFound($"No student found with ID {studentId}");
+            }
+
+            
             return NoContent();
-
-
         }
         [HttpDelete("{id}")]
         public ActionResult DeleteStudent(int id)
         {
-            var deletedStudent = _getStudents.RemoveStudent(id);   
+            var deletedStudent = _studentService.RemoveStudent(id);
             if (deletedStudent == null)
             {
                 return NotFound($"Student with ID {id} not found");

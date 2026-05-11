@@ -1,7 +1,7 @@
 using MyFirstAPI.Models;
 namespace MyFirstAPI.Services
 {
-    public class StudentService :IStudentService
+    public class StudentService : IStudentService
     {
         public List<Students> students;
         public StudentService()
@@ -29,14 +29,14 @@ namespace MyFirstAPI.Services
                     Gpa = 3.44
 
                 }
-                
+
             };
         }
 
         public Students GetStudentById(int id)
         {
             var record = students.FirstOrDefault(s => s.Id == id);
-            if (record!=null)
+            if (record != null)
             {
                 return record;
             }
@@ -55,14 +55,33 @@ namespace MyFirstAPI.Services
         public Students RemoveStudent(int id)
         {
             var getStudentRecord = GetStudentById(id);
-            if (getStudentRecord==null)
+            if (getStudentRecord == null)
             {
                 return null;
             }
             students.Remove(getStudentRecord);
             return getStudentRecord;
         }
+        public Students? UpdateStudent(int id, Students updatedStudent)
+        {
+            // Find existing student
+            var existingStudent = GetStudentById(id);
 
-        
+            // If not found
+            if (existingStudent == null)
+            {
+                return null;
+            }
+
+            existingStudent.Name = updatedStudent.Name;
+            existingStudent.Gpa = updatedStudent.Gpa;
+            existingStudent.section = updatedStudent.section;
+
+            
+
+            return existingStudent;
+        }
+
+
     }
 }

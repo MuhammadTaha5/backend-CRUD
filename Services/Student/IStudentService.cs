@@ -8,6 +8,7 @@ namespace MyFirstAPI.Services
         public Students GetStudentById(int id);
         public Students AddStudent(Students std);
         public Students RemoveStudent(int id);
+        public Students UpdateStudent(int id, Students student);
 
     
     }
