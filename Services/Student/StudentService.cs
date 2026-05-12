@@ -33,53 +33,81 @@ namespace MyFirstAPI.Services
             };
         }
 
-        public Students GetStudentById(int id)
+        public ServiceResponse<Students> GetStudentById(int id)
         {
+            ServiceResponse<Students> serviceResponse = new ServiceResponse<Students>();
+
             var record = students.FirstOrDefault(s => s.Id == id);
             if (record != null)
             {
-                return record;
+                serviceResponse.Data = record;
+                serviceResponse.Message = "Record Found";
+                return serviceResponse;
             }
-            return null;
+            serviceResponse.Data = null;
+            serviceResponse.Message = $"No record Found with ID {id}";
+            serviceResponse.success = false;
+            return serviceResponse;
         }
 
-        public List<Students> GetAllStundents()
+        public ServiceResponse<List<Students>> GetAllStundents()
         {
-            return students;
+            ServiceResponse<List<Students>> serviceResponse = new ServiceResponse<List<Students>>();
+            serviceResponse.Data = students;
+
+            return serviceResponse;
         }
-        public Students AddStudent(Students std)
+        public ServiceResponse<Students> AddStudent(Students std)
         {
+            ServiceResponse<Students> serviceResponse = new ServiceResponse<Students>();
+
             students.Add(std);
-            return std;
+            serviceResponse.Data = std;
+            serviceResponse.Message = "New Record Added";
+            return serviceResponse;
         }
-        public Students RemoveStudent(int id)
+        public ServiceResponse<Students> RemoveStudent(int id)
         {
+            ServiceResponse<Students> serviceResponse = new ServiceResponse<Students>();
+
             var getStudentRecord = GetStudentById(id);
             if (getStudentRecord == null)
             {
-                return null;
+                serviceResponse.Message=$"No student record found with Id {id}";
+                serviceResponse.success = false;
+
             }
-            students.Remove(getStudentRecord);
-            return getStudentRecord;
+            students.Remove(getStudentRecord.Data);
+            serviceResponse.Data=getStudentRecord.Data;
+            serviceResponse.Message= "Record removed";
+
+            return serviceResponse;
         }
-        public Students? UpdateStudent(int id, Students updatedStudent)
+        public ServiceResponse<Students> UpdateStudent(int id, Students updatedStudent)
         {
             // Find existing student
-            var existingStudent = GetStudentById(id);
+            ServiceResponse<Students> serviceResponse = new ServiceResponse<Students>();
+
+            var existingStudent = GetStudentById(id).Data;
 
             // If not found
             if (existingStudent == null)
             {
-                return null;
+                serviceResponse.success = false;
+                serviceResponse.Data = null;
+                serviceResponse.Message = $"No User Found with Id {id}";
+                return serviceResponse;
             }
 
             existingStudent.Name = updatedStudent.Name;
             existingStudent.Gpa = updatedStudent.Gpa;
             existingStudent.section = updatedStudent.section;
 
-            
+            serviceResponse.Message = "Record updated";
+            serviceResponse.Data = existingStudent;
 
-            return existingStudent;
+
+            return serviceResponse;
         }
 
 

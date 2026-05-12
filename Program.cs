@@ -6,7 +6,7 @@ builder.Services.AddControllers();
 
 builder.Services.AddOpenApi();
 
-builder.Services.AddSingleton<ProductService>();
+// builder.Services.AddSingleton<ProductService>();
 builder.Services.AddSingleton<StudentService>();
 
 var app = builder.Build();

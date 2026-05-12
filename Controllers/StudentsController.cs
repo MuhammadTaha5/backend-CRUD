@@ -23,9 +23,9 @@ namespace MyFirstAPI.Controllers
         public ActionResult GetStudentById(int stdId)
         {
             var studentsRecord = _studentService.GetStudentById(stdId);
-            if (studentsRecord == null)
+            if (!studentsRecord.success)
             {
-                return NotFound("No record found");
+                return NotFound(studentsRecord);
             }
             return Ok(studentsRecord);
         }
