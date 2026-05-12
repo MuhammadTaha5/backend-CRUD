@@ -83,7 +83,7 @@ namespace MyFirstAPI.Controllers
             var updatedStudent = _studentService.UpdateStudent(studentId, student);
 
 
-            if (updatedStudent == null)
+            if (!updatedStudent.success)
             {
                 return NotFound($"No student found with ID {studentId}");
             }
@@ -95,9 +95,9 @@ namespace MyFirstAPI.Controllers
         public ActionResult DeleteStudent(int id)
         {
             var deletedStudent = _studentService.RemoveStudent(id);
-            if (deletedStudent == null)
+            if (!deletedStudent.success)
             {
-                return NotFound($"Student with ID {id} not found");
+                return NotFound(deletedStudent);
             }
 
             return Ok(new
