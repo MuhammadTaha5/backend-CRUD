@@ -8,6 +8,7 @@ builder.Services.AddOpenApi();
 
 // builder.Services.AddSingleton<ProductService>();
 builder.Services.AddSingleton<StudentService>();
+builder.Services.AddAutoMapper(typeof(Program));
 
 var app = builder.Build();
 

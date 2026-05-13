@@ -15,7 +15,7 @@ namespace MyFirstAPI.Controllers
         [HttpGet]
         public ActionResult<List<Models.Students>> GetStudents()
         {
-            var studentsRecord = _studentService.GetAllStundents();
+            var studentsRecord = _studentService.GetAllStudents();
 
             return Ok(studentsRecord);
         }

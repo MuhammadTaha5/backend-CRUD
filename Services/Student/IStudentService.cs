@@ -4,8 +4,8 @@ namespace MyFirstAPI.Services
 {
     public interface IStudentService
     {
-        public ServiceResponse<List<Students>> GetAllStundents();
-        public ServiceResponse<Students> GetStudentById(int id);
+        public ServiceResponse<List<StudentResponseDTO>> GetAllStudents();
+        public ServiceResponse<StudentResponseDTO> GetStudentById(int id);
         public ServiceResponse<Students> AddStudent(Students std);
         public ServiceResponse<Students> RemoveStudent(int id);
         public ServiceResponse<Students> UpdateStudent(int id, Students student);

@@ -1,46 +1,60 @@
+using AutoMapper;
 using MyFirstAPI.Models;
 namespace MyFirstAPI.Services
 {
     public class StudentService : IStudentService
     {
         public List<Students> students;
-        public StudentService()
+        private readonly IMapper _mapper;
+        public StudentService(IMapper mapper)
         {
+            _mapper = mapper;
             students = new List<Students>
             {
                 new Students
                 {
                     Id = 132,
                     Name = "Muhammad Taha",
-                    Gpa = 3.79
+                    Gpa = 3.79,
+                    Age = 21,
+                    Department = "Computer Science",
+                    Email = "taha.saeed339@gmail.com"
 
                 },
                 new Students
                 {
                     Id = 108,
                     Name = "Muhammad Faisal",
-                    Gpa = 3.08
+                    Gpa = 3.08,
+                    Age = 21,
+                    Department = "Computer Science",
+                    Email = "faisal@gmail.com"
 
                 },
                 new Students
                 {
                     Id = 19,
                     Name = "Abdullah",
-                    Gpa = 3.44
+                    Gpa = 3.44,
+                    Age = 21,
+                    Department = "Computer Science",
+                    Email = "abdullah@gmail.com"
 
                 }
 
             };
         }
 
-        public ServiceResponse<Students> GetStudentById(int id)
+        public ServiceResponse<StudentResponseDTO> GetStudentById(int id)
         {
-            ServiceResponse<Students> serviceResponse = new ServiceResponse<Students>();
+            ServiceResponse<StudentResponseDTO> serviceResponse = new ServiceResponse<StudentResponseDTO>();
 
             var record = students.FirstOrDefault(s => s.Id == id);
+
             if (record != null)
             {
-                serviceResponse.Data = record;
+                var studentResponseDTO = _mapper.Map<StudentResponseDTO>(record);
+                serviceResponse.Data = studentResponseDTO;
                 serviceResponse.Message = "Record Found";
                 return serviceResponse;
             }
@@ -50,10 +64,14 @@ namespace MyFirstAPI.Services
             return serviceResponse;
         }
 
-        public ServiceResponse<List<Students>> GetAllStundents()
+        public ServiceResponse<List<StudentResponseDTO>> GetAllStudents()
         {
-            ServiceResponse<List<Students>> serviceResponse = new ServiceResponse<List<Students>>();
-            serviceResponse.Data = students;
+            ServiceResponse<List<StudentResponseDTO>> serviceResponse = new ServiceResponse<List<StudentResponseDTO>>();
+            var studentResponseDTOs = _mapper.Map<List<StudentResponseDTO>>(students);
+
+            serviceResponse.Data = studentResponseDTOs;
+            serviceResponse.Message = "Students Retrieved Successfully";
+            serviceResponse.success = true;
 
             return serviceResponse;
         }
@@ -70,16 +88,16 @@ namespace MyFirstAPI.Services
         {
             ServiceResponse<Students> serviceResponse = new ServiceResponse<Students>();
 
-            var getStudentRecord = GetStudentById(id);
+            var getStudentRecord = students.FirstOrDefault(c=>(c.Id==id));
             if (getStudentRecord == null)
             {
-                serviceResponse.Message=$"No student record found with Id {id}";
+                serviceResponse.Message = $"No student record found with Id {id}";
                 serviceResponse.success = false;
 
             }
-            students.Remove(getStudentRecord.Data);
-            serviceResponse.Data=getStudentRecord.Data;
-            serviceResponse.Message= "Record removed";
+            students.Remove(getStudentRecord);
+            serviceResponse.Data = getStudentRecord;
+            serviceResponse.Message = "Record removed";
 
             return serviceResponse;
         }
@@ -88,7 +106,7 @@ namespace MyFirstAPI.Services
             // Find existing student
             ServiceResponse<Students> serviceResponse = new ServiceResponse<Students>();
 
-            var existingStudent = GetStudentById(id).Data;
+            var existingStudent = students.FirstOrDefault(c=>(c.Id==id));
 
             // If not found
             if (existingStudent == null)
