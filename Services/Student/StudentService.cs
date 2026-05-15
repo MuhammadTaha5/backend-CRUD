@@ -88,14 +88,18 @@ namespace MyFirstAPI.Services
         {
             ServiceResponse<Students> serviceResponse = new ServiceResponse<Students>();
 
-            var getStudentRecord = students.FirstOrDefault(c=>(c.Id==id));
+            var getStudentRecord = students.FirstOrDefault(c => (c.Id == id));
             if (getStudentRecord == null)
             {
                 serviceResponse.Message = $"No student record found with Id {id}";
                 serviceResponse.success = false;
 
             }
-            students.Remove(getStudentRecord);
+            if (getStudentRecord != null)
+            {
+                students.Remove(getStudentRecord);
+            }
+
             serviceResponse.Data = getStudentRecord;
             serviceResponse.Message = "Record removed";
 
@@ -106,7 +110,7 @@ namespace MyFirstAPI.Services
             // Find existing student
             ServiceResponse<Students> serviceResponse = new ServiceResponse<Students>();
 
-            var existingStudent = students.FirstOrDefault(c=>(c.Id==id));
+            var existingStudent = students.FirstOrDefault(c => (c.Id == id));
 
             // If not found
             if (existingStudent == null)
@@ -128,6 +132,30 @@ namespace MyFirstAPI.Services
             return serviceResponse;
         }
 
+        public ServiceResponse<List<StudentResponseDTO>> GetStudentByName(string name)
+        {
+            ServiceResponse<List<StudentResponseDTO>> serviceResponse = new ServiceResponse<List<StudentResponseDTO>>();
+            #pragma warning disable CS8602 // Dereference of a possibly null reference.
 
+            var getRecord = students.Where(s => s.Name.StartsWith(name, StringComparison.OrdinalIgnoreCase)).ToList();
+
+            if (getRecord != null)
+            {
+                var serviceResponseDTO = _mapper.Map<List<StudentResponseDTO>>(getRecord);
+                serviceResponse.Data = serviceResponseDTO;
+                serviceResponse.Message = "Record Found";
+                serviceResponse.success = true;
+            }
+            serviceResponse.Data = null;
+            serviceResponse.success = false;
+            serviceResponse.Message = "No record found";
+            return serviceResponse;
+
+
+
+
+
+
+        }
     }
 }

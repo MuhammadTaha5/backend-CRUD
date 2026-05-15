@@ -8,9 +8,13 @@ namespace MyFirstAPI.Controllers
     public class StudentsController : ControllerBase
     {
         private StudentService _studentService;
-        public StudentsController(StudentService studentService)
+        private readonly ILogService _service1;
+        private readonly ILogService _service2;
+        public StudentsController(StudentService studentService, ILogService s1, ILogService s2)
         {
             _studentService = studentService;
+            _service1 = s1;
+            _service2 = s2;
         }
         [HttpGet]
         public ActionResult<List<Models.Students>> GetStudents()
@@ -37,18 +41,14 @@ namespace MyFirstAPI.Controllers
             {
                 return BadRequest("Name is required");
             }
-            if (name != null)
+            
+            Console.WriteLine("Name: " + name);
+            var studentRecord = _studentService.GetStudentById(id);
+            if (!studentRecord.success)
             {
-                Console.WriteLine("Name: " + name);
-                var studentRecord = _studentService.GetStudentById(id);
-                if (studentRecord == null)
-                {
-                    return NotFound($"No User Found {name}");
-                }
-                return Ok(studentRecord);
-
+                return NotFound($"No User Found {name}");
             }
-            return NotFound($"No Record Found with {name}");
+            return Ok(studentRecord);
         }
         [HttpPost]
         public ActionResult<Students> AddStudent(Students student)
@@ -106,6 +106,18 @@ namespace MyFirstAPI.Controllers
                 DeletedStudent = deletedStudent
             });
         }
+        [HttpGet("/api/GetGuid")]
+        public ActionResult GetGuid()
+        {
+            return Ok( new
+            {
+                service1= _service1.GetOperationId(),
+                service2= _service2.GetOperationId(),
+                }
+
+            );
+        }
+        
 
     }
 }

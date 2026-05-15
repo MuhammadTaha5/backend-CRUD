@@ -9,6 +9,7 @@ namespace MyFirstAPI.Services
         public ServiceResponse<Students> AddStudent(Students std);
         public ServiceResponse<Students> RemoveStudent(int id);
         public ServiceResponse<Students> UpdateStudent(int id, Students student);
+        public ServiceResponse<List<StudentResponseDTO>> GetStudentByName(string name);
 
     
     }
