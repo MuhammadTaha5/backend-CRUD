@@ -43,7 +43,8 @@ namespace MyFirstAPI.Controllers
             }
             
             Console.WriteLine("Name: " + name);
-            var studentRecord = _studentService.GetStudentById(id);
+            var studentRecord = _studentService.GetStudentByName(name);
+            Console.Write(studentRecord.Data);
             if (!studentRecord.success)
             {
                 return NotFound($"No User Found {name}");

@@ -145,6 +145,7 @@ namespace MyFirstAPI.Services
                 serviceResponse.Data = serviceResponseDTO;
                 serviceResponse.Message = "Record Found";
                 serviceResponse.success = true;
+                return serviceResponse;
             }
             serviceResponse.Data = null;
             serviceResponse.success = false;
