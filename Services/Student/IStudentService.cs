@@ -6,9 +6,9 @@ namespace MyFirstAPI.Services
     {
         public ServiceResponse<List<StudentResponseDTO>> GetAllStudents();
         public ServiceResponse<StudentResponseDTO> GetStudentById(int id);
-        public ServiceResponse<Students> AddStudent(Students std);
-        public ServiceResponse<Students> RemoveStudent(int id);
-        public ServiceResponse<Students> UpdateStudent(int id, Students student);
+        public ServiceResponse<Student> AddStudent(Student std);
+        public ServiceResponse<Student> RemoveStudent(int id);
+        public ServiceResponse<Student> UpdateStudent(int id, Student student);
         public ServiceResponse<List<StudentResponseDTO>> GetStudentByName(string name);
 
     

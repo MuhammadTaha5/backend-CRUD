@@ -4,14 +4,14 @@ namespace MyFirstAPI.Services
 {
     public class StudentService : IStudentService
     {
-        public List<Students> students;
+        public List<Student> students;
         private readonly IMapper _mapper;
         public StudentService(IMapper mapper)
         {
             _mapper = mapper;
-            students = new List<Students>
+            students = new List<Student>
             {
-                new Students
+                new Student
                 {
                     Id = 132,
                     Name = "Muhammad Taha",
@@ -21,7 +21,7 @@ namespace MyFirstAPI.Services
                     Email = "taha.saeed339@gmail.com"
 
                 },
-                new Students
+                new Student
                 {
                     Id = 108,
                     Name = "Muhammad Faisal",
@@ -31,7 +31,7 @@ namespace MyFirstAPI.Services
                     Email = "faisal@gmail.com"
 
                 },
-                new Students
+                new Student
                 {
                     Id = 19,
                     Name = "Abdullah",
@@ -75,18 +75,18 @@ namespace MyFirstAPI.Services
 
             return serviceResponse;
         }
-        public ServiceResponse<Students> AddStudent(Students std)
+        public ServiceResponse<Student> AddStudent(Student std)
         {
-            ServiceResponse<Students> serviceResponse = new ServiceResponse<Students>();
+            ServiceResponse<Student> serviceResponse = new ServiceResponse<Student>();
 
             students.Add(std);
             serviceResponse.Data = std;
             serviceResponse.Message = "New Record Added";
             return serviceResponse;
         }
-        public ServiceResponse<Students> RemoveStudent(int id)
+        public ServiceResponse<Student> RemoveStudent(int id)
         {
-            ServiceResponse<Students> serviceResponse = new ServiceResponse<Students>();
+            ServiceResponse<Student> serviceResponse = new ServiceResponse<Student>();
 
             var getStudentRecord = students.FirstOrDefault(c => (c.Id == id));
             if (getStudentRecord == null)
@@ -105,10 +105,10 @@ namespace MyFirstAPI.Services
 
             return serviceResponse;
         }
-        public ServiceResponse<Students> UpdateStudent(int id, Students updatedStudent)
+        public ServiceResponse<Student> UpdateStudent(int id, Student updatedStudent)
         {
             // Find existing student
-            ServiceResponse<Students> serviceResponse = new ServiceResponse<Students>();
+            ServiceResponse<Student> serviceResponse = new ServiceResponse<Student>();
 
             var existingStudent = students.FirstOrDefault(c => (c.Id == id));
 

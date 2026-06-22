@@ -1,6 +1,6 @@
 namespace MyFirstAPI.Models
 {
-    public class Students
+    public class Student
     {
         public int Id{ get; set;}
         public string? Name{set; get;}

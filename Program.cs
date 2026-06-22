@@ -1,5 +1,6 @@
+using Microsoft.EntityFrameworkCore;
 using MyFirstAPI.Services;
-
+using MyFirstAPI.Data;
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddSwaggerGen();
 builder.Services.AddControllers();
@@ -7,9 +8,11 @@ builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 
 // builder.Services.AddSingleton<ProductService>();
-builder.Services.AddSingleton<StudentService>();
+builder.Services.AddSingleton<IStudentService, StudentService>();
 builder.Services.AddAutoMapper(typeof(Program));
-builder.Services.AddSingleton<ILogService, LogService>();
+builder.Services.AddScoped<ILogService, LogService>();
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())

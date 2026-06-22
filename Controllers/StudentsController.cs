@@ -7,17 +7,17 @@ namespace MyFirstAPI.Controllers
     [Route("api/[controller]")]
     public class StudentsController : ControllerBase
     {
-        private StudentService _studentService;
+        private IStudentService _studentService;
         private readonly ILogService _service1;
         private readonly ILogService _service2;
-        public StudentsController(StudentService studentService, ILogService s1, ILogService s2)
+        public StudentsController(IStudentService studentService, ILogService s1, ILogService s2)
         {
             _studentService = studentService;
             _service1 = s1;
             _service2 = s2;
         }
         [HttpGet]
-        public ActionResult<List<Models.Students>> GetStudents()
+        public ActionResult<List<Models.Student>> GetStudents()
         {
             var studentsRecord = _studentService.GetAllStudents();
 
@@ -34,15 +34,15 @@ namespace MyFirstAPI.Controllers
             return Ok(studentsRecord);
         }
         [HttpGet("search")]
-        public ActionResult<Models.Students> GetStudentByName(string name, int id)
+        public ActionResult<Models.Student> GetStudentByName(string name, int id)
         {
-            Console.WriteLine($"Id: {id}");
+            //Console.WriteLine($"Id: {id}");
             if (string.IsNullOrEmpty(name))
             {
                 return BadRequest("Name is required");
             }
             
-            Console.WriteLine("Name: " + name);
+            //Console.WriteLine("Name: " + name);
             var studentRecord = _studentService.GetStudentByName(name);
             Console.Write(studentRecord.Data);
             if (!studentRecord.success)
@@ -52,7 +52,7 @@ namespace MyFirstAPI.Controllers
             return Ok(studentRecord);
         }
         [HttpPost]
-        public ActionResult<Students> AddStudent(Students student)
+        public ActionResult<Student> AddStudent(Student student)
         {
             if (student == null)
             {
@@ -68,7 +68,7 @@ namespace MyFirstAPI.Controllers
 
         }
         [HttpPut("{studentId}")]
-        public ActionResult UpdateStudent(int studentId, Students student)
+        public ActionResult UpdateStudent(int studentId, Student student)
         {
             if (student == null)
             {
