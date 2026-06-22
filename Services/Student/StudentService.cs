@@ -81,11 +81,11 @@ namespace MyFirstAPI.Services
 
             return serviceResponse;
         }
-        public ServiceResponse<Student> AddStudent(Student std)
+        public async Task<ServiceResponse<Student>> AddStudent(Student std)
         {
             ServiceResponse<Student> serviceResponse = new ServiceResponse<Student>();
-
-            students.Add(std);
+            _dbContext.Students.Add(std);
+            var record = await _dbContext.SaveChangesAsync();
             serviceResponse.Data = std;
             serviceResponse.Message = "New Record Added";
             return serviceResponse;
@@ -138,14 +138,14 @@ namespace MyFirstAPI.Services
             return serviceResponse;
         }
 
-        public ServiceResponse<List<StudentResponseDTO>> GetStudentByName(string name)
+        public async Task<ServiceResponse<List<StudentResponseDTO>>> GetStudentByName(string name)
         {
             ServiceResponse<List<StudentResponseDTO>> serviceResponse = new ServiceResponse<List<StudentResponseDTO>>();
             #pragma warning disable CS8602 // Dereference of a possibly null reference.
 
-            var getRecord = students.Where(s => s.Name.StartsWith(name, StringComparison.OrdinalIgnoreCase)).ToList();
-
-            if (getRecord != null)
+            var getRecord = await _dbContext.Students.Where(s => s.Name.Contains(name)).ToListAsync();
+            
+            if (getRecord.Any())
             {
                 var serviceResponseDTO = _mapper.Map<List<StudentResponseDTO>>(getRecord);
                 serviceResponse.Data = serviceResponseDTO;
@@ -157,11 +157,6 @@ namespace MyFirstAPI.Services
             serviceResponse.success = false;
             serviceResponse.Message = "No record found";
             return serviceResponse;
-
-
-
-
-
 
         }
     }

@@ -34,38 +34,46 @@ namespace MyFirstAPI.Controllers
             return Ok(studentsRecord);
         }
         [HttpGet("search")]
-        public ActionResult<Models.Student> GetStudentByName(string name, int id)
+        public async Task<ActionResult<Models.Student>> GetStudentByName(string name, int id)
         {
             //Console.WriteLine($"Id: {id}");
             if (string.IsNullOrEmpty(name))
             {
                 return BadRequest("Name is required");
             }
-            
+
             //Console.WriteLine("Name: " + name);
-            var studentRecord = _studentService.GetStudentByName(name);
+            var studentRecord = await _studentService.GetStudentByName(name);
             Console.Write(studentRecord.Data);
             if (!studentRecord.success)
             {
-                return NotFound($"No User Found {name}");
+                return NotFound(studentRecord);
             }
             return Ok(studentRecord);
         }
         [HttpPost]
-        public ActionResult<Student> AddStudent(Student student)
+        public async Task<ActionResult<ServiceResponse<Student>>> AddStudent(AddStudentDTO dto)
         {
-            if (student == null)
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var student = new Student
             {
-                return BadRequest("Student object is null");
-            }
+                Name = dto.Name,
+                Age = dto.Age,
+                Department = dto.Department,
+                Gpa = dto.Gpa,
+                section = dto.Section,
+                Email = dto.Email
+            };
 
-            if (_studentService.AddStudent(student) != null)
-            {
-                return CreatedAtAction(nameof(GetStudentById), new { stdId = student.Id }, student);
-            }
-            return BadRequest("Failed to add Student");
+            var result = await _studentService.AddStudent(student);
 
-
+            return CreatedAtAction(
+                nameof(GetStudentById),
+                new { stdId = result.Data.Id },
+                result
+            );
         }
         [HttpPut("{studentId}")]
         public ActionResult UpdateStudent(int studentId, Student student)
@@ -75,7 +83,7 @@ namespace MyFirstAPI.Controllers
                 return BadRequest("Student data is required.");
             }
 
-         
+
             if (studentId != student.Id)
             {
                 return BadRequest("Student ID mismatch.");
@@ -89,7 +97,7 @@ namespace MyFirstAPI.Controllers
                 return NotFound($"No student found with ID {studentId}");
             }
 
-            
+
             return NoContent();
         }
         [HttpDelete("{id}")]
@@ -110,15 +118,15 @@ namespace MyFirstAPI.Controllers
         [HttpGet("/api/GetGuid")]
         public ActionResult GetGuid()
         {
-            return Ok( new
+            return Ok(new
             {
-                service1= _service1.GetOperationId(),
-                service2= _service2.GetOperationId(),
-                }
+                service1 = _service1.GetOperationId(),
+                service2 = _service2.GetOperationId(),
+            }
 
             );
         }
-        
+
 
     }
 }
