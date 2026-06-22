@@ -5,6 +5,6 @@ public class AutoMapperProfile : Profile
 {
     public AutoMapperProfile()
     {
-        CreateMap<Students, StudentResponseDTO>();
+        CreateMap<Student, StudentResponseDTO>();
     }
 }

@@ -1,13 +1,17 @@
 using AutoMapper;
+using Microsoft.EntityFrameworkCore;
+using MyFirstAPI.Data;
 using MyFirstAPI.Models;
 namespace MyFirstAPI.Services
 {
     public class StudentService : IStudentService
     {
+        private readonly ApplicationDbContext _dbContext;
         public List<Student> students;
         private readonly IMapper _mapper;
-        public StudentService(IMapper mapper)
+        public StudentService(IMapper mapper, ApplicationDbContext dbContext)
         {
+            _dbContext = dbContext;
             _mapper = mapper;
             students = new List<Student>
             {
@@ -45,11 +49,12 @@ namespace MyFirstAPI.Services
             };
         }
 
-        public ServiceResponse<StudentResponseDTO> GetStudentById(int id)
+        public async Task<ServiceResponse<StudentResponseDTO>> GetStudentById(int id)
         {
             ServiceResponse<StudentResponseDTO> serviceResponse = new ServiceResponse<StudentResponseDTO>();
 
-            var record = students.FirstOrDefault(s => s.Id == id);
+            // var record = students.FirstOrDefault(s => s.Id == id);
+            var record = await _dbContext.Students.FindAsync(id);
 
             if (record != null)
             {
@@ -64,11 +69,12 @@ namespace MyFirstAPI.Services
             return serviceResponse;
         }
 
-        public ServiceResponse<List<StudentResponseDTO>> GetAllStudents()
+        public async Task<ServiceResponse<List<StudentResponseDTO>>> GetAllStudents()
         {
             ServiceResponse<List<StudentResponseDTO>> serviceResponse = new ServiceResponse<List<StudentResponseDTO>>();
-            var studentResponseDTOs = _mapper.Map<List<StudentResponseDTO>>(students);
-
+            var allStudents = await _dbContext.Students.ToListAsync();
+            var studentResponseDTOs = _mapper.Map<List<StudentResponseDTO>>(allStudents);
+            
             serviceResponse.Data = studentResponseDTOs;
             serviceResponse.Message = "Students Retrieved Successfully";
             serviceResponse.success = true;

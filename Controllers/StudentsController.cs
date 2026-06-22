@@ -17,16 +17,16 @@ namespace MyFirstAPI.Controllers
             _service2 = s2;
         }
         [HttpGet]
-        public ActionResult<List<Models.Student>> GetStudents()
+        public async Task<ActionResult<List<Student>>> GetStudents()
         {
-            var studentsRecord = _studentService.GetAllStudents();
+            var studentsRecord = await _studentService.GetAllStudents();
 
             return Ok(studentsRecord);
         }
         [HttpGet("{stdId}")]
-        public ActionResult GetStudentById(int stdId)
+        public async Task<ActionResult> GetStudentById(int stdId)
         {
-            var studentsRecord = _studentService.GetStudentById(stdId);
+            var studentsRecord = await _studentService.GetStudentById(stdId);
             if (!studentsRecord.success)
             {
                 return NotFound(studentsRecord);

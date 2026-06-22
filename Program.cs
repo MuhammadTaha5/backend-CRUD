@@ -8,7 +8,7 @@ builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 
 // builder.Services.AddSingleton<ProductService>();
-builder.Services.AddSingleton<IStudentService, StudentService>();
+builder.Services.AddScoped<IStudentService, StudentService>();
 builder.Services.AddAutoMapper(typeof(Program));
 builder.Services.AddScoped<ILogService, LogService>();
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
