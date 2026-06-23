@@ -90,51 +90,58 @@ namespace MyFirstAPI.Services
             serviceResponse.Message = "New Record Added";
             return serviceResponse;
         }
-        public ServiceResponse<Student> RemoveStudent(int id)
+        public async Task<ServiceResponse<StudentResponseDTO>> RemoveStudent(int id)
         {
-            ServiceResponse<Student> serviceResponse = new ServiceResponse<Student>();
+            ServiceResponse<StudentResponseDTO> serviceResponse = new ServiceResponse<StudentResponseDTO>();
 
-            var getStudentRecord = students.FirstOrDefault(c => (c.Id == id));
+            var getStudentRecord = await _dbContext.Students.FindAsync(id);
+            var responseDTOs = _mapper.Map<StudentResponseDTO>(getStudentRecord);
+            
+            
             if (getStudentRecord == null)
             {
                 serviceResponse.Message = $"No student record found with Id {id}";
                 serviceResponse.success = false;
-
+                serviceResponse.Data = null;
+                return serviceResponse;
             }
             if (getStudentRecord != null)
             {
-                students.Remove(getStudentRecord);
+                _dbContext.Students.Remove(getStudentRecord);
+                await _dbContext.SaveChangesAsync();
             }
 
-            serviceResponse.Data = getStudentRecord;
+            serviceResponse.Data = responseDTOs;
             serviceResponse.Message = "Record removed";
 
             return serviceResponse;
         }
-        public ServiceResponse<Student> UpdateStudent(int id, Student updatedStudent)
+        public async Task<ServiceResponse<StudentResponseDTO>> UpdateStudent(int id, UpdateStudentDTO updatedStudent)
         {
             // Find existing student
-            ServiceResponse<Student> serviceResponse = new ServiceResponse<Student>();
+            ServiceResponse<StudentResponseDTO> serviceResponse = new ServiceResponse<StudentResponseDTO>();
 
-            var existingStudent = students.FirstOrDefault(c => (c.Id == id));
+
+            var existingStudent = await _dbContext.Students.FindAsync(id);
 
             // If not found
-            if (existingStudent == null)
+            if (existingStudent==null)
             {
                 serviceResponse.success = false;
                 serviceResponse.Data = null;
                 serviceResponse.Message = $"No User Found with Id {id}";
                 return serviceResponse;
             }
-
-            existingStudent.Name = updatedStudent.Name;
-            existingStudent.Gpa = updatedStudent.Gpa;
-            existingStudent.section = updatedStudent.section;
-
-            serviceResponse.Message = "Record updated";
-            serviceResponse.Data = existingStudent;
-
-
+            else
+            {
+                _mapper.Map(updatedStudent, existingStudent);
+                await _dbContext.SaveChangesAsync();
+                serviceResponse.Message = "Record updated";
+                var responseDTO = _mapper.Map<StudentResponseDTO>(existingStudent);
+                serviceResponse.Data = responseDTO;
+                
+            }
+            
             return serviceResponse;
         }
 

@@ -7,5 +7,7 @@ public class AutoMapperProfile : Profile
     {
         CreateMap<Student, StudentResponseDTO>();
         CreateMap<AddStudentDTO, Student>();
+        CreateMap<UpdateStudentDTO, Student>();
+
     }
 }

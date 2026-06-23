@@ -76,20 +76,12 @@ namespace MyFirstAPI.Controllers
             );
         }
         [HttpPut("{studentId}")]
-        public ActionResult UpdateStudent(int studentId, Student student)
+        public async Task <ActionResult> UpdateStudent(int studentId, UpdateStudentDTO dto)
         {
-            if (student == null)
-            {
-                return BadRequest("Student data is required.");
-            }
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
 
-
-            if (studentId != student.Id)
-            {
-                return BadRequest("Student ID mismatch.");
-            }
-
-            var updatedStudent = _studentService.UpdateStudent(studentId, student);
+            var updatedStudent = await _studentService.UpdateStudent(studentId, dto);
 
 
             if (!updatedStudent.success)
@@ -98,22 +90,18 @@ namespace MyFirstAPI.Controllers
             }
 
 
-            return NoContent();
+            return Ok(updatedStudent);
         }
         [HttpDelete("{id}")]
-        public ActionResult DeleteStudent(int id)
+        public async Task<ActionResult> DeleteStudent(int id)
         {
-            var deletedStudent = _studentService.RemoveStudent(id);
+            var deletedStudent = await _studentService.RemoveStudent(id);
             if (!deletedStudent.success)
             {
                 return NotFound(deletedStudent);
             }
 
-            return Ok(new
-            {
-                Message = "Student deleted successfully",
-                DeletedStudent = deletedStudent
-            });
+            return Ok(deletedStudent);
         }
         [HttpGet("/api/GetGuid")]
         public ActionResult GetGuid()
