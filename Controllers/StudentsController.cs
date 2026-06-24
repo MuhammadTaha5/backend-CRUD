@@ -1,8 +1,11 @@
 using Microsoft.AspNetCore.Mvc;
 using MyFirstAPI.Services;
 using MyFirstAPI.Models;
+using Microsoft.AspNetCore.Authorization;
+
 namespace MyFirstAPI.Controllers
 {
+    [Authorize]
     [ApiController]
     [Route("api/[controller]")]
     public class StudentsController : ControllerBase
@@ -52,6 +55,7 @@ namespace MyFirstAPI.Controllers
             return Ok(studentRecord);
         }
         [HttpPost]
+        [Authorize(Roles="Admin")]
         public async Task<ActionResult<ServiceResponse<Student>>> AddStudent(AddStudentDTO dto)
         {
             if (!ModelState.IsValid)
@@ -76,6 +80,7 @@ namespace MyFirstAPI.Controllers
             );
         }
         [HttpPut("{studentId}")]
+        [Authorize(Roles="Admin")]
         public async Task <ActionResult> UpdateStudent(int studentId, UpdateStudentDTO dto)
         {
             if (!ModelState.IsValid)
@@ -93,6 +98,7 @@ namespace MyFirstAPI.Controllers
             return Ok(updatedStudent);
         }
         [HttpDelete("{id}")]
+        [Authorize(Roles="Admin")]
         public async Task<ActionResult> DeleteStudent(int id)
         {
             var deletedStudent = await _studentService.RemoveStudent(id);
