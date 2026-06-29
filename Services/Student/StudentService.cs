@@ -81,12 +81,22 @@ namespace MyFirstAPI.Services
 
             return serviceResponse;
         }
-        public async Task<ServiceResponse<Student>> AddStudent(Student std)
+        public async Task<ServiceResponse<StudentResponseDTO>> AddStudent(AddStudentDTO dto)
         {
-            ServiceResponse<Student> serviceResponse = new ServiceResponse<Student>();
-            _dbContext.Students.Add(std);
+            ServiceResponse<StudentResponseDTO> serviceResponse = new ServiceResponse<StudentResponseDTO>();
+            var student = new Student
+            {
+                Name = dto.Name,
+                Age = dto.Age,
+                Department = dto.Department,
+                Gpa = dto.Gpa,
+                section = dto.Section,
+                Email = dto.Email
+            };
+            var response = _mapper.Map<StudentResponseDTO>(student);
+            _dbContext.Students.Add(student);
             var record = await _dbContext.SaveChangesAsync();
-            serviceResponse.Data = std;
+            serviceResponse.Data = response;
             serviceResponse.Message = "New Record Added";
             return serviceResponse;
         }

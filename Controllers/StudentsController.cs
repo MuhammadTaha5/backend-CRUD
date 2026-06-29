@@ -1,8 +1,11 @@
 using Microsoft.AspNetCore.Mvc;
 using MyFirstAPI.Services;
 using MyFirstAPI.Models;
+using Microsoft.AspNetCore.Authorization;
+
 namespace MyFirstAPI.Controllers
 {
+    [Authorize]
     [ApiController]
     [Route("api/[controller]")]
     public class StudentsController : ControllerBase
@@ -52,30 +55,20 @@ namespace MyFirstAPI.Controllers
             return Ok(studentRecord);
         }
         [HttpPost]
-        public async Task<ActionResult<ServiceResponse<Student>>> AddStudent(AddStudentDTO dto)
+        [Authorize(Roles="Admin")]
+        public async Task<ActionResult<ServiceResponse<StudentResponseDTO>>> AddStudent(AddStudentDTO dto)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            var student = new Student
-            {
-                Name = dto.Name,
-                Age = dto.Age,
-                Department = dto.Department,
-                Gpa = dto.Gpa,
-                section = dto.Section,
-                Email = dto.Email
-            };
+            var result = await _studentService.AddStudent(dto);
 
-            var result = await _studentService.AddStudent(student);
 
-            return CreatedAtAction(
-                nameof(GetStudentById),
-                new { stdId = result.Data.Id },
-                result
-            );
+
+            return Ok(result);
         }
         [HttpPut("{studentId}")]
+        [Authorize(Roles="Admin")]
         public async Task <ActionResult> UpdateStudent(int studentId, UpdateStudentDTO dto)
         {
             if (!ModelState.IsValid)
@@ -93,6 +86,7 @@ namespace MyFirstAPI.Controllers
             return Ok(updatedStudent);
         }
         [HttpDelete("{id}")]
+        [Authorize(Roles="Admin")]
         public async Task<ActionResult> DeleteStudent(int id)
         {
             var deletedStudent = await _studentService.RemoveStudent(id);
