@@ -24,12 +24,13 @@ namespace StudentManagement.Repositories
             var entity = await _dbTable.FindAsync(id);
             if(entity!=null)
             {
-                await _dbTable.DeleteAsync(entity);
+                _dbTable.Remove(entity);
                 await _applicationDbContext.SaveChangesAsync();
             }
+            return null;
         }
 
-        public async Task<bool> ExistsAsyns(int id)
+        public async Task<bool> ExistsAsync(int id)
         {
             var exists = await _dbTable.FindAsync(id);
             if(exists==null)
@@ -51,7 +52,7 @@ namespace StudentManagement.Repositories
 
         public async Task UpdateAsync(T entity)
         {
-            _dbTable.UpdateAsync(entity);
+            _dbTable.Update(entity);
             await _applicationDbContext.SaveChangesAsync();
         }
 

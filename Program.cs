@@ -6,6 +6,7 @@ using MyFirstAPI.Models;
 using System.Text;
 using Microsoft.EntityFrameworkCore;
 using MyFirstAPI.Services;
+using StudentManagement.Repositories;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -60,6 +61,7 @@ builder.Services.AddOpenApi();
 builder.Services.AddScoped<IStudentService, StudentService>();
 builder.Services.AddAutoMapper(typeof(Program));
 builder.Services.AddScoped<ILogService, LogService>();
+builder.Services.AddScoped<IRepository<Student>, Repository<Student>>();
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 var app = builder.Build();
