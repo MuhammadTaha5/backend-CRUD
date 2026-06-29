@@ -44,17 +44,17 @@ public class AuthController : ControllerBase
             UserName = dto.Email  // Identity requires UserName
         };
 
-        // Identity hashes password automatically
+        
         var result = await _userManager.CreateAsync(user, dto.Password);
         
         if (!result.Succeeded)  
         {
-            // return Identity errors (e.g. password too weak)
+        
             var errors = result.Errors.Select(e => e.Description);
             return BadRequest(new { errors });
         }
 
-        // assign default role
+        
         await _userManager.AddToRoleAsync(user, "Student");
 
         return Ok(new { message = "Registration successful" });

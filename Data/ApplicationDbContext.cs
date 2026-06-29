@@ -11,7 +11,7 @@ namespace MyFirstAPI.Data
             
         }
         public DbSet<Student> Students { get; set; }
-        public DbSet<RefreshToken> RefreshTokens { get; set; }
+        //public DbSet<RefreshToken> RefreshTokens { get; set; }
 
         
     }
