@@ -56,28 +56,16 @@ namespace MyFirstAPI.Controllers
         }
         [HttpPost]
         [Authorize(Roles="Admin")]
-        public async Task<ActionResult<ServiceResponse<Student>>> AddStudent(AddStudentDTO dto)
+        public async Task<ActionResult<ServiceResponse<StudentResponseDTO>>> AddStudent(AddStudentDTO dto)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            var student = new Student
-            {
-                Name = dto.Name,
-                Age = dto.Age,
-                Department = dto.Department,
-                Gpa = dto.Gpa,
-                section = dto.Section,
-                Email = dto.Email
-            };
+            var result = await _studentService.AddStudent(dto);
 
-            var result = await _studentService.AddStudent(student);
 
-            return CreatedAtAction(
-                nameof(GetStudentById),
-                new { stdId = result.Data.Id },
-                result
-            );
+
+            return Ok(result);
         }
         [HttpPut("{studentId}")]
         [Authorize(Roles="Admin")]
