@@ -45,14 +45,5 @@ namespace MyFirstAPI.Services
 
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
-
-        public string GenerateRefreshToken()
-        {
-            // cryptographically secure random string
-            var bytes = new byte[64];
-            using var rng = RandomNumberGenerator.Create();
-            rng.GetBytes(bytes);
-            return Convert.ToBase64String(bytes);
-        }
     }
 }
