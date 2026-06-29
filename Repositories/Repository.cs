@@ -19,9 +19,14 @@ namespace StudentManagement.Repositories
             return entity;
         }
 
-        public Task<T?> DeleteAsync(int id)
+        public async Task<T?> DeleteAsync(int id)
         {
-            throw new NotImplementedException();
+            var entity = await _dbTable.FindAsync(id);
+            if(entity!=null)
+            {
+                await _dbTable.DeleteAsync(entity);
+                await _applicationDbContext.SaveChangesAsync();
+            }
         }
 
         public async Task<bool> ExistsAsyns(int id)
@@ -44,9 +49,10 @@ namespace StudentManagement.Repositories
             return await _dbTable.FindAsync(id);
         }
 
-        public Task UpdateAsync(T entity)
+        public async Task UpdateAsync(T entity)
         {
-            throw new NotImplementedException();
+            _dbTable.UpdateAsync(entity);
+            await _applicationDbContext.SaveChangesAsync();
         }
 
     }
