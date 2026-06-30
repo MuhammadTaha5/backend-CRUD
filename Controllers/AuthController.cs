@@ -6,23 +6,16 @@ using MyFirstAPI.Data;
 using MyFirstAPI.Models;
 using MyFirstAPI.Models.DTOs;
 using MyFirstAPI.Services;
+using StudentManagement.Services.Auth;
 
 [ApiController]
 [Route("api/[controller]")]
 public class AuthController : ControllerBase
 {
-    private readonly UserManager<AppUser> _userManager;
-    private readonly ApplicationDbContext _context;
-    private readonly TokenService _tokenService;
-    private readonly IConfiguration _config;
-
-    public AuthController(UserManager<AppUser> userManager, ApplicationDbContext context,
-        TokenService tokenService, IConfiguration config)
+    private readonly IAuthService _authService;
+    public AuthController(IAuthService authService)
     {
-        _userManager = userManager;
-        _context = context;
-        _tokenService = tokenService;
-        _config = config;
+        _authService = authService;
     }
 
     // POST api/auth/register
@@ -66,34 +59,19 @@ public class AuthController : ControllerBase
     {
         if (!ModelState.IsValid)
             return BadRequest(ModelState);
-
-        var user = await _userManager.FindByEmailAsync(dto.Email);
-        if (user == null)
-            return Unauthorized(new { message = "Invalid credentials" }); 
-
-        // check lockout
-        if (await _userManager.IsLockedOutAsync(user))
-            return Unauthorized(new { message = "Account locked. Try again later." });
-
-        var passwordValid = await _userManager.CheckPasswordAsync(user, dto.Password);
-        if (!passwordValid)
+        try
         {
-            await _userManager.AccessFailedAsync(user); 
-            return Unauthorized(new { message = "Invalid credentials" });
+            var serviceResponse = await _authService.Login(dto);
+            return Ok(serviceResponse);
+            
         }
-
-        // reset fail count on success
-        await _userManager.ResetAccessFailedCountAsync(user);
-
-        var roles = await _userManager.GetRolesAsync(user);
-        var accessToken = _tokenService.GenerateAccessToken(user, roles);
-
-        return Ok(new AuthResponseDTO
+        catch (UnauthorizedAccessException excep)
         {
-            AccessToken = accessToken,
-            Email = user.Email!,
-            FullName = user.FullName
-        });
+            return Unauthorized(new {message= excep.Message});
+        }
+        
+
+
     }
 
    
