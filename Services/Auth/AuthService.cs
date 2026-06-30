@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Identity;
 using MyFirstAPI.Models;
 using MyFirstAPI.Models.DTOs;
 using MyFirstAPI.Services;
+using StudentManagement.Exceptions;
 
 namespace StudentManagement.Services.Auth
 {
@@ -48,8 +49,32 @@ namespace StudentManagement.Services.Auth
             });
         }
 
-        public Task<RegisterDTO> Register(RegisterDTO dto)
+        public async Task<ServiceResponse<RegisterDTO>> Register(RegisterDTO dto)
         {
+            var existingUser = await _userManager.FindByEmailAsync(dto.Email);
+            if (existingUser != null)
+            {
+                throw new ConflictException("Email already registered");
+            }
+            var user = new AppUser
+            {
+                FullName = dto.FullName,
+                Email = dto.Email,
+                UserName = dto.Email  // Identity requires UserName
+            };
+            var result = await _userManager.CreateAsync(user, dto.Password);
+            if (!result.Succeeded)
+            {
+                var errors = result.Errors.Select(e => e.Description);
+                throw new ValidationException(errors);
+            }
+            await _userManager.AddToRoleAsync(user, "Student");
+            return new ServiceResponse<RegisterDTO>{
+                success = true,
+                Message = "Registration successful",
+                Data = dto
+            };
+
 
         }
 

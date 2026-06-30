@@ -23,34 +23,20 @@ public class AuthController : ControllerBase
     public async Task<ActionResult> Register(RegisterDTO dto)
     {
         if (!ModelState.IsValid)
+        {
             return BadRequest(ModelState);
-
-        // check duplicate email
-        var existingUser = await _userManager.FindByEmailAsync(dto.Email);
-        if (existingUser != null)
-            return Conflict(new { message = "Email already registered" });
-
-        var user = new AppUser
-        {
-            FullName = dto.FullName,
-            Email = dto.Email,
-            UserName = dto.Email  // Identity requires UserName
-        };
-
-        
-        var result = await _userManager.CreateAsync(user, dto.Password);
-        
-        if (!result.Succeeded)  
-        {
-        
-            var errors = result.Errors.Select(e => e.Description);
-            return BadRequest(new { errors });
+            
         }
-
-        
-        await _userManager.AddToRoleAsync(user, "Student");
-
-        return Ok(new { message = "Registration successful" });
+        try
+        {
+            var registerService = _authService.Register(dto);
+            return Ok(registerService);
+        }
+        catch (Exception e)
+        {
+            return BadRequest(e.Message);
+        }
+          
     }
 
     // POST api/auth/login
@@ -63,16 +49,14 @@ public class AuthController : ControllerBase
         {
             var serviceResponse = await _authService.Login(dto);
             return Ok(serviceResponse);
-            
+
         }
         catch (UnauthorizedAccessException excep)
         {
-            return Unauthorized(new {message= excep.Message});
+            return Unauthorized(new { message = excep.Message });
         }
-        
-
 
     }
 
-   
+
 }
