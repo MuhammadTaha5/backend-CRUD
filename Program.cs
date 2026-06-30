@@ -92,6 +92,7 @@ using (var scope = app.Services.CreateScope())
 }
 
 app.UseAuthentication(); // must be BEFORE UseAuthorization
+
 app.UseAuthorization();
 
 app.Run();

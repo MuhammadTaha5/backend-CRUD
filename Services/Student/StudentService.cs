@@ -113,8 +113,9 @@ namespace MyFirstAPI.Services
         {
             ServiceResponse<StudentResponseDTO> serviceResponse = new ServiceResponse<StudentResponseDTO>();
 
-            var getStudentRecord = await _dbContext.Students.FindAsync(id);
-            var responseDTOs = _mapper.Map<StudentResponseDTO>(getStudentRecord);
+            var getStudentRecord = await _repository.DeleteAsync(id);
+    
+            
             
             
             if (getStudentRecord == null)
@@ -124,13 +125,9 @@ namespace MyFirstAPI.Services
                 serviceResponse.Data = null;
                 return serviceResponse;
             }
-            if (getStudentRecord != null)
-            {
-                _dbContext.Students.Remove(getStudentRecord);
-                await _dbContext.SaveChangesAsync();
-            }
+            var responseDTO = _mapper.Map<StudentResponseDTO>(getStudentRecord);
 
-            serviceResponse.Data = responseDTOs;
+            serviceResponse.Data = responseDTO;
             serviceResponse.Message = "Record removed";
 
             return serviceResponse;
