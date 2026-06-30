@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using MyFirstAPI.Data;
+using MyFirstAPI.Models;
 
 namespace StudentManagement.Repositories
 {
@@ -19,13 +20,12 @@ namespace StudentManagement.Repositories
             return entity;
         }
 
-        public async Task<T?> DeleteAsync(int id)
+        public async Task<T?> DeleteAsync(T entity)
         {
-            var entity = await _dbTable.FindAsync(id);
             if(entity!=null)
             {
                 _dbTable.Remove(entity);
-                await _applicationDbContext.SaveChangesAsync();
+                return entity;
             }
             return null;
         }

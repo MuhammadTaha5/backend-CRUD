@@ -8,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using MyFirstAPI.Services;
 using StudentManagement.Repositories;
 using StudentManagement.Services.Auth;
+using StudentManagement;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -58,12 +59,13 @@ builder.Services.AddControllers();
 
 builder.Services.AddOpenApi();
 
-// builder.Services.AddSingleton<ProductService>();
+
 builder.Services.AddScoped<IStudentService, StudentService>();
 builder.Services.AddAutoMapper(typeof(Program));
 builder.Services.AddScoped<ILogService, LogService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IRepository<Student>, Repository<Student>>();
+builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 var app = builder.Build();

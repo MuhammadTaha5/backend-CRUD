@@ -2,6 +2,7 @@ using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using MyFirstAPI.Data;
 using MyFirstAPI.Models;
+using StudentManagement;
 using StudentManagement.Repositories;
 namespace MyFirstAPI.Services
 {
@@ -10,13 +11,15 @@ namespace MyFirstAPI.Services
         private readonly ApplicationDbContext _dbContext;
         public List<Student> students;
         private readonly IRepository<Student> _repository;
+        private readonly IUnitOfWork _unitOfWork;
         private readonly IMapper _mapper;
-        public StudentService(IMapper mapper, ApplicationDbContext dbContext, IRepository<Student> repo)
+        public StudentService(IMapper mapper, ApplicationDbContext dbContext, IRepository<Student> repo, IUnitOfWork unitOfWork)
 
         {
             _dbContext = dbContext;
             _mapper = mapper;
             _repository = repo;
+            _unitOfWork = unitOfWork;
             students = new List<Student>
             {
                 new Student
@@ -59,7 +62,7 @@ namespace MyFirstAPI.Services
 
             // var record = students.FirstOrDefault(s => s.Id == id);
             //var record = await _dbContext.Students.FindAsync(id);
-            var record = await _repository.GetByIdAsync(id);
+            var record = await _unitOfWork.StudentRepo.GetByIdAsync(id);
             
 
             if (record != null)
@@ -79,7 +82,7 @@ namespace MyFirstAPI.Services
         {
             ServiceResponse<List<StudentResponseDTO>> serviceResponse = new ServiceResponse<List<StudentResponseDTO>>();
             //var allStudents = await _dbContext.Students.ToListAsync();
-            var allStudents = await _repository.GetAllAsync();
+            var allStudents = await _unitOfWork.StudentRepo.GetAllAsync();
             var studentResponseDTOs = _mapper.Map<List<StudentResponseDTO>>(allStudents);
             
             serviceResponse.Data = studentResponseDTOs;
@@ -105,32 +108,38 @@ namespace MyFirstAPI.Services
             //var record = await _dbContext.SaveChangesAsync();
             var addStudent  = await _repository.AddAsync(student);
             var response = _mapper.Map<StudentResponseDTO>(addStudent);
+
             serviceResponse.Data = response;
             serviceResponse.Message = "New Record Added";
             return serviceResponse;
         }
         public async Task<ServiceResponse<StudentResponseDTO>> RemoveStudent(int id)
         {
-            ServiceResponse<StudentResponseDTO> serviceResponse = new ServiceResponse<StudentResponseDTO>();
+            var getStudentRecord = await _unitOfWork.StudentRepo.GetByIdAsync(id);
 
-            var getStudentRecord = await _repository.DeleteAsync(id);
-    
-            
-            
-            
             if (getStudentRecord == null)
             {
-                serviceResponse.Message = $"No student record found with Id {id}";
-                serviceResponse.success = false;
-                serviceResponse.Data = null;
-                return serviceResponse;
+                return new ServiceResponse<StudentResponseDTO>
+                {
+                    Message = $"No student record found with Id {id}",
+                    success = false,
+                    Data = null
+                };
             }
+            var deleteStudent = await _unitOfWork.StudentRepo.DeleteAsync(getStudentRecord);
+            if (deleteStudent==null)
+            {
+                await _unitOfWork.SaveAsync();
+            }
+
             var responseDTO = _mapper.Map<StudentResponseDTO>(getStudentRecord);
 
-            serviceResponse.Data = responseDTO;
-            serviceResponse.Message = "Record removed";
-
-            return serviceResponse;
+            return new ServiceResponse<StudentResponseDTO>
+            {
+                Data = responseDTO,
+                Message = "Record removed",
+                success = true
+            };
         }
         public async Task<ServiceResponse<StudentResponseDTO>> UpdateStudent(int id, UpdateStudentDTO updatedStudent)
         {
