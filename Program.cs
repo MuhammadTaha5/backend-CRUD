@@ -9,6 +9,7 @@ using MyFirstAPI.Services;
 using StudentManagement.Repositories;
 using StudentManagement.Services.Auth;
 using StudentManagement;
+using StudentManagement.Domain.Repositories;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -66,6 +67,7 @@ builder.Services.AddScoped<ILogService, LogService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IRepository<Student>, Repository<Student>>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+builder.Services.AddScoped<IStudentRepository, StudentRepository>();
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 var app = builder.Build();

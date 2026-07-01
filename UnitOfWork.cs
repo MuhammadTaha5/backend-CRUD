@@ -1,5 +1,6 @@
 using MyFirstAPI.Data;
 using MyFirstAPI.Models;
+using StudentManagement.Domain.Repositories;
 using StudentManagement.Repositories;
 
 namespace StudentManagement
@@ -12,7 +13,7 @@ namespace StudentManagement
         public UnitOfWork(ApplicationDbContext applicationDb)
         {
             _dbContext = applicationDb;
-            StudentRepo = new Repository<Student>(applicationDb);
+            StudentRepo = new StudentRepository(applicationDb);
         }
         public async Task<int> SaveAsync()
         => await _dbContext.SaveChangesAsync();

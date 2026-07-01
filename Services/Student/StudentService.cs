@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using MyFirstAPI.Data;
 using MyFirstAPI.Models;
 using StudentManagement;
+using StudentManagement.DTOs;
 using StudentManagement.Repositories;
 namespace MyFirstAPI.Services
 {
@@ -63,7 +64,7 @@ namespace MyFirstAPI.Services
             // var record = students.FirstOrDefault(s => s.Id == id);
             //var record = await _dbContext.Students.FindAsync(id);
             var record = await _unitOfWork.StudentRepo.GetByIdAsync(id);
-            
+
 
             if (record != null)
             {
@@ -84,7 +85,7 @@ namespace MyFirstAPI.Services
             //var allStudents = await _dbContext.Students.ToListAsync();
             var allStudents = await _unitOfWork.StudentRepo.GetAllAsync();
             var studentResponseDTOs = _mapper.Map<List<StudentResponseDTO>>(allStudents);
-            
+
             serviceResponse.Data = studentResponseDTOs;
             serviceResponse.Message = "Students Retrieved Successfully";
             serviceResponse.success = true;
@@ -102,10 +103,10 @@ namespace MyFirstAPI.Services
                 section = dto.Section,
                 Email = dto.Email
             };
-            
+
             //_dbContext.Students.Add(student);
             //var record = await _dbContext.SaveChangesAsync();
-            var addStudent  = await _unitOfWork.StudentRepo.AddAsync(student);
+            var addStudent = await _unitOfWork.StudentRepo.AddAsync(student);
             await _unitOfWork.SaveAsync();
             var response = _mapper.Map<StudentResponseDTO>(addStudent);
             return new ServiceResponse<StudentResponseDTO>
@@ -113,7 +114,7 @@ namespace MyFirstAPI.Services
                 Data = response,
                 Message = "New Record Added",
             };
-        
+
         }
         public async Task<ServiceResponse<StudentResponseDTO>> RemoveStudent(int id)
         {
@@ -129,7 +130,7 @@ namespace MyFirstAPI.Services
                 };
             }
             var deleteStudent = await _unitOfWork.StudentRepo.DeleteAsync(getStudentRecord);
-            if (deleteStudent==null)
+            if (deleteStudent == null)
             {
                 await _unitOfWork.SaveAsync();
             }
@@ -149,13 +150,13 @@ namespace MyFirstAPI.Services
             var existingStudent = await _dbContext.Students.FindAsync(id);
 
             // If not found
-            if (existingStudent==null)
+            if (existingStudent == null)
             {
                 return new ServiceResponse<StudentResponseDTO>
                 {
                     success = false,
                     Data = null,
-                    Message = $"No User Found with Id {id}"       
+                    Message = $"No User Found with Id {id}"
                 };
             }
             else
@@ -166,20 +167,20 @@ namespace MyFirstAPI.Services
                 return new ServiceResponse<StudentResponseDTO>
                 {
                     Message = "Record updated",
-                    Data = responseDTO  
+                    Data = responseDTO
                 };
-                    
+
             }
-            
+
         }
 
         public async Task<ServiceResponse<List<StudentResponseDTO>>> GetStudentByName(string name)
         {
             ServiceResponse<List<StudentResponseDTO>> serviceResponse = new ServiceResponse<List<StudentResponseDTO>>();
-            #pragma warning disable CS8602 // Dereference of a possibly null reference.
+#pragma warning disable CS8602 // Dereference of a possibly null reference.
 
             var getRecord = await _dbContext.Students.Where(s => s.Name.Contains(name)).ToListAsync();
-            
+
             if (getRecord.Any())
             {
                 var serviceResponseDTO = _mapper.Map<List<StudentResponseDTO>>(getRecord);
@@ -192,6 +193,18 @@ namespace MyFirstAPI.Services
             serviceResponse.success = false;
             serviceResponse.Message = "No record found";
             return serviceResponse;
+
+        }
+        public async Task<ServiceResponse<PagedResult<Student>>> GetStudentQuery(QueryParams p)
+        {
+            var result = await _unitOfWork.StudentRepo.GetQueryAsync(p);
+
+            return new ServiceResponse<PagedResult<Student>>
+            {
+                Data = result,
+                success = true
+
+            };
 
         }
     }

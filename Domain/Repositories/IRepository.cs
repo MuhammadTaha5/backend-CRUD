@@ -1,4 +1,5 @@
 using MyFirstAPI.Models;
+using StudentManagement.DTOs;
 
 namespace StudentManagement.Repositories
 {
@@ -10,6 +11,7 @@ namespace StudentManagement.Repositories
         Task UpdateAsync(T entity);
         Task <T?> DeleteAsync(T entity);
         Task <bool> ExistsAsync(int id);
+        Task<PagedResult<T>> GetQueryAsync(QueryParams queryParams);
 
          
     }
