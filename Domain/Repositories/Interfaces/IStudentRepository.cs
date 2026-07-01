@@ -6,6 +6,6 @@ namespace StudentManagement.Domain.Repositories
 {
     public interface IStudentRepository:IRepository<Student>
     {
-        public Task<PagedResult<Student>> GetQueryAsync(QueryParams queryParams);
+        
     }
 }

@@ -18,14 +18,11 @@ namespace StudentManagement.Repositories
             return entity;
         }
 
-        public async Task<T?> DeleteAsync(T entity)
+        public async Task<bool> DeleteAsync(T entity)
         {
-            if (entity != null)
-            {
-                _dbTable.Remove(entity);
-                return entity;
-            }
-            return null;
+            if (entity == null) return false;
+            _dbTable.Remove(entity);
+            return true; 
         }
 
         public async Task<bool> ExistsAsync(int id)

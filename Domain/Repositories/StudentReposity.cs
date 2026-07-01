@@ -32,10 +32,15 @@ namespace StudentManagement.Domain.Repositories
             {
                 query = queryParams.Desc ? query.OrderByDescending(s => s.Name) : query.OrderBy(s => s.Name);
             }
-            else if (sortBy == "email")
+            else if (sortBy == "gpa")
             {
-                query = queryParams.Desc ? query.OrderByDescending(s => s.Email) : query.OrderBy(s => s.Email);
+                query = queryParams.Desc ? query.OrderByDescending(s => s.Gpa) : query.OrderBy(s => s.Gpa);
             }
+            else if (sortBy == "age")
+            {
+                query = queryParams.Desc ? query.OrderByDescending(s => s.Age) : query.OrderBy(s => s.Age);
+            }
+        
             else
             {
                 query = queryParams.Desc ? query.OrderByDescending(s => s.Id) : query.OrderBy(s => s.Id);
@@ -55,6 +60,7 @@ namespace StudentManagement.Domain.Repositories
                 TotalCount = total,
                 PageNumber = queryParams.Page,
                 PageSize = queryParams.PageSize
+                
             };
         }
     }

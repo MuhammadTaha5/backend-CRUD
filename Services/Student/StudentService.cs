@@ -129,20 +129,29 @@ namespace MyFirstAPI.Services
                     Data = null
                 };
             }
-            var deleteStudent = await _unitOfWork.StudentRepo.DeleteAsync(getStudentRecord);
-            if (deleteStudent == null)
+            await _unitOfWork.StudentRepo.DeleteAsync(getStudentRecord);
+
+            int rowsAffected = await _unitOfWork.SaveAsync();
+            if (rowsAffected > 0)
             {
-                await _unitOfWork.SaveAsync();
+                var responseDTO = _mapper.Map<StudentResponseDTO>(getStudentRecord);
+
+                return new ServiceResponse<StudentResponseDTO>
+                {
+                    Data = responseDTO,
+                    Message = "Record removed",
+                    success = true
+                };
+
             }
-
-            var responseDTO = _mapper.Map<StudentResponseDTO>(getStudentRecord);
-
             return new ServiceResponse<StudentResponseDTO>
-            {
-                Data = responseDTO,
-                Message = "Record removed",
-                success = true
-            };
+                {
+                    Data = null,
+                    Message = "No Record Removed",
+                    success = false
+                };
+
+
         }
         public async Task<ServiceResponse<StudentResponseDTO>> UpdateStudent(int id, UpdateStudentDTO updatedStudent)
         {
@@ -176,23 +185,26 @@ namespace MyFirstAPI.Services
 
         public async Task<ServiceResponse<List<StudentResponseDTO>>> GetStudentByName(string name)
         {
-            ServiceResponse<List<StudentResponseDTO>> serviceResponse = new ServiceResponse<List<StudentResponseDTO>>();
-#pragma warning disable CS8602 // Dereference of a possibly null reference.
-
             var getRecord = await _dbContext.Students.Where(s => s.Name.Contains(name)).ToListAsync();
 
             if (getRecord.Any())
             {
                 var serviceResponseDTO = _mapper.Map<List<StudentResponseDTO>>(getRecord);
-                serviceResponse.Data = serviceResponseDTO;
-                serviceResponse.Message = "Record Found";
-                serviceResponse.success = true;
-                return serviceResponse;
+                
+                return new ServiceResponse<List<StudentResponseDTO>>
+                {
+                    Data = serviceResponseDTO,
+                    Message = "Record Found",
+                    success = true
+                };
             }
-            serviceResponse.Data = null;
-            serviceResponse.success = false;
-            serviceResponse.Message = "No record found";
-            return serviceResponse;
+            
+            return new ServiceResponse<List<StudentResponseDTO>>
+                {
+                    Data = null,
+                    success = false,
+                    Message = "No record found"
+                };
 
         }
         public async Task<ServiceResponse<PagedResult<Student>>> GetStudentQuery(QueryParams p)
