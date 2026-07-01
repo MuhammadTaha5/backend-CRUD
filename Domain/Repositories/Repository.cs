@@ -16,7 +16,6 @@ namespace StudentManagement.Repositories
         public async Task<T> AddAsync(T entity)
         {
             await _dbTable.AddAsync(entity);
-            await _applicationDbContext.SaveChangesAsync();
             return entity;
         }
 
@@ -53,7 +52,7 @@ namespace StudentManagement.Repositories
         public async Task UpdateAsync(T entity)
         {
             _dbTable.Update(entity);
-            await _applicationDbContext.SaveChangesAsync();
+            
         }
 
     }

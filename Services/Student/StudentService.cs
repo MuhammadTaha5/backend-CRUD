@@ -93,7 +93,6 @@ namespace MyFirstAPI.Services
         }
         public async Task<ServiceResponse<StudentResponseDTO>> AddStudent(AddStudentDTO dto)
         {
-            ServiceResponse<StudentResponseDTO> serviceResponse = new ServiceResponse<StudentResponseDTO>();
             var student = new Student
             {
                 Name = dto.Name,
@@ -106,12 +105,15 @@ namespace MyFirstAPI.Services
             
             //_dbContext.Students.Add(student);
             //var record = await _dbContext.SaveChangesAsync();
-            var addStudent  = await _repository.AddAsync(student);
+            var addStudent  = await _unitOfWork.StudentRepo.AddAsync(student);
+            await _unitOfWork.SaveAsync();
             var response = _mapper.Map<StudentResponseDTO>(addStudent);
-
-            serviceResponse.Data = response;
-            serviceResponse.Message = "New Record Added";
-            return serviceResponse;
+            return new ServiceResponse<StudentResponseDTO>
+            {
+                Data = response,
+                Message = "New Record Added",
+            };
+        
         }
         public async Task<ServiceResponse<StudentResponseDTO>> RemoveStudent(int id)
         {
@@ -144,30 +146,31 @@ namespace MyFirstAPI.Services
         public async Task<ServiceResponse<StudentResponseDTO>> UpdateStudent(int id, UpdateStudentDTO updatedStudent)
         {
             // Find existing student
-            ServiceResponse<StudentResponseDTO> serviceResponse = new ServiceResponse<StudentResponseDTO>();
-
-
             var existingStudent = await _dbContext.Students.FindAsync(id);
 
             // If not found
             if (existingStudent==null)
             {
-                serviceResponse.success = false;
-                serviceResponse.Data = null;
-                serviceResponse.Message = $"No User Found with Id {id}";
-                return serviceResponse;
+                return new ServiceResponse<StudentResponseDTO>
+                {
+                    success = false,
+                    Data = null,
+                    Message = $"No User Found with Id {id}"       
+                };
             }
             else
             {
                 _mapper.Map(updatedStudent, existingStudent);
-                await _dbContext.SaveChangesAsync();
-                serviceResponse.Message = "Record updated";
+                await _unitOfWork.SaveAsync();
                 var responseDTO = _mapper.Map<StudentResponseDTO>(existingStudent);
-                serviceResponse.Data = responseDTO;
-                
+                return new ServiceResponse<StudentResponseDTO>
+                {
+                    Message = "Record updated",
+                    Data = responseDTO  
+                };
+                    
             }
             
-            return serviceResponse;
         }
 
         public async Task<ServiceResponse<List<StudentResponseDTO>>> GetStudentByName(string name)
