@@ -1,3 +1,5 @@
+using MyFirstAPI.Models;
+
 namespace StudentManagement.Repositories
 {
     public interface IRepository<T> where T :class
@@ -6,8 +8,8 @@ namespace StudentManagement.Repositories
         Task<T?> GetByIdAsync(int id);
         Task<T> AddAsync(T entity);
         Task UpdateAsync(T entity);
-        Task <T?> DeleteAsync(int id);
-        Task <bool> ExistsAsyns(int id);
+        Task <T?> DeleteAsync(T entity);
+        Task <bool> ExistsAsync(int id);
 
          
     }

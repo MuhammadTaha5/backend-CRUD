@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using MyFirstAPI.Data;
+using MyFirstAPI.Models;
 
 namespace StudentManagement.Repositories
 {
@@ -15,16 +16,20 @@ namespace StudentManagement.Repositories
         public async Task<T> AddAsync(T entity)
         {
             await _dbTable.AddAsync(entity);
-            await _applicationDbContext.SaveChangesAsync();
             return entity;
         }
 
-        public Task<T?> DeleteAsync(int id)
+        public async Task<T?> DeleteAsync(T entity)
         {
-            throw new NotImplementedException();
+            if(entity!=null)
+            {
+                _dbTable.Remove(entity);
+                return entity;
+            }
+            return null;
         }
 
-        public async Task<bool> ExistsAsyns(int id)
+        public async Task<bool> ExistsAsync(int id)
         {
             var exists = await _dbTable.FindAsync(id);
             if(exists==null)
@@ -44,9 +49,10 @@ namespace StudentManagement.Repositories
             return await _dbTable.FindAsync(id);
         }
 
-        public Task UpdateAsync(T entity)
+        public async Task UpdateAsync(T entity)
         {
-            throw new NotImplementedException();
+            _dbTable.Update(entity);
+            
         }
 
     }

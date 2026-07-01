@@ -10,9 +10,6 @@ namespace MyFirstAPI.Models
         [Range(1, 100)]
         public int Age { get; set; }
 
-        [Range(0.0, 4.0)]
-        public double Gpa { get; set; }
-
         [Required]
         public string Section { get; set; } = "A";
 
@@ -20,7 +17,5 @@ namespace MyFirstAPI.Models
         [EmailAddress]
         public string Email { get; set; } = string.Empty;
 
-        [Required]
-        public string Department { get; set; } = string.Empty;
     }
 }
