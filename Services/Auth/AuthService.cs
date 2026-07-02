@@ -119,9 +119,37 @@ namespace StudentManagement.Services.Auth
                     token = encodedToken
                 },
                 success = true,
-                Message = "Account Confirmed"
+                Message = "Email Confirmed"
             };
 
+        }
+        public async Task<ServiceResponse<AuthResponseDTO>> SetPassword(SetPasswordDto dto)
+        {
+            var user = await _userManager.FindByIdAsync(dto.UserId);
+            if (user==null)
+            {
+                throw new NotFoundException("No User Found");
+            }
+            var setPassword = await _userManager.ResetPasswordAsync(user, dto.Token, dto.Password);
+            if (!setPassword.Succeeded)
+            {
+                var errors = setPassword.Errors.Select(e => e.Description).ToList();
+                throw new ValidationException(errors);
+            }
+            await _userManager.AddToRoleAsync(user, "Student");
+            var accessToken = _tokenService.GenerateAccessToken(user, new List<string>{"Student"});
+
+            return new ServiceResponse<AuthResponseDTO>
+            {
+                Data = new AuthResponseDTO
+                {
+                    AccessToken = accessToken,
+                    Email = user.Email,
+                    FullName = user.FullName
+                },
+                success = true,
+                Message = "Logged in Successfully. Token Generated"
+            };
         }
 
 
