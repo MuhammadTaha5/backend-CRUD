@@ -9,6 +9,9 @@ using MyFirstAPI.Services;
 using StudentManagement.Repositories;
 using StudentManagement.Services.Auth;
 using StudentManagement;
+using StudentManagement.Domain.Repositories;
+using StudentManagement.Services;
+using StudentManagement.Domain.Models;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -52,7 +55,8 @@ builder.Services.AddAuthentication(options =>
 
 builder.Services.AddAuthorization();
 builder.Services.AddScoped<TokenService>();
-
+builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
+builder.Services.AddScoped<IEmailService, SmtpEmailService>();
 
 builder.Services.AddSwaggerGen();
 builder.Services.AddControllers();
@@ -66,6 +70,7 @@ builder.Services.AddScoped<ILogService, LogService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IRepository<Student>, Repository<Student>>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+builder.Services.AddScoped<IStudentRepository, StudentRepository>();
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 var app = builder.Build();

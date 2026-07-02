@@ -2,10 +2,11 @@ using Microsoft.AspNetCore.Mvc;
 using MyFirstAPI.Services;
 using MyFirstAPI.Models;
 using Microsoft.AspNetCore.Authorization;
+using StudentManagement.DTOs;
 
 namespace MyFirstAPI.Controllers
 {
-    [Authorize]
+    [Authorize]    
     [ApiController]
     [Route("api/[controller]")]
     public class StudentsController : ControllerBase
@@ -97,6 +98,15 @@ namespace MyFirstAPI.Controllers
 
             return Ok(deletedStudent);
         }
+        [HttpGet("query")]
+        public async Task<ActionResult> GetStudentQuery([FromQuery] QueryParams queryParams)
+        {
+            ServiceResponse<PagedResult<Student>> result = await _studentService.GetStudentQuery(queryParams);
+            return Ok(result);
+        }
+
+
+
         [HttpGet("/api/GetGuid")]
         public ActionResult GetGuid()
         {

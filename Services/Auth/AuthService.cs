@@ -1,7 +1,9 @@
+using System.Net;
 using Microsoft.AspNetCore.Identity;
 using MyFirstAPI.Models;
 using MyFirstAPI.Models.DTOs;
 using MyFirstAPI.Services;
+using StudentManagement.DTOs;
 using StudentManagement.Exceptions;
 
 namespace StudentManagement.Services.Auth
@@ -12,11 +14,13 @@ namespace StudentManagement.Services.Auth
 
         private readonly TokenService _tokenService;
         private readonly IConfiguration _config;
-        public AuthService(IConfiguration config, TokenService tokenService, UserManager<AppUser> userManager)
+        private readonly IEmailService _emailService;
+        public AuthService(IConfiguration config, TokenService tokenService, UserManager<AppUser> userManager, IEmailService emailService)
         {
             _userManager = userManager;
             _tokenService = tokenService;
             _config = config;
+            _emailService = emailService;
         }
         public async Task<AuthResponseDTO> Login(LoginDTO loginDTO)
         {
@@ -49,34 +53,78 @@ namespace StudentManagement.Services.Auth
             });
         }
 
-        public async Task<ServiceResponse<RegisterDTO>> Register(RegisterDTO dto)
+        public async Task<ServiceResponse<RegisterDTO>> RegisterUser(RegisterDTO dto)
         {
             var existingUser = await _userManager.FindByEmailAsync(dto.Email);
             if (existingUser != null)
             {
-                throw new ConflictException("Email already registered");
+                throw new ConflictException("User Already Registered");
             }
-            var user = new AppUser
+            AppUser user = new AppUser
             {
-                FullName = dto.FullName,
+                UserName = dto.Email,
                 Email = dto.Email,
-                UserName = dto.Email  // Identity requires UserName
+                FullName = dto.FullName,
+                EmailConfirmed = false
             };
-            var result = await _userManager.CreateAsync(user, dto.Password);
+            var result = await _userManager.CreateAsync(user);
             if (!result.Succeeded)
             {
                 var errors = result.Errors.Select(e => e.Description);
                 throw new ValidationException(errors);
             }
-            await _userManager.AddToRoleAsync(user, "Student");
-            return new ServiceResponse<RegisterDTO>{
+            var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+            var encodedToken = WebUtility.UrlEncode(token);
+            var confirmLink = $"{_config["FrontendUrl"]}/api/auth/confirm-email?userId={user.Id}&token={encodedToken}";
+
+            var body = $"<p>Hi {user.FullName},</p><p>Click below to set your password and activate your account:</p><a href='{confirmLink}'>Confirm Account</a>";
+
+            await _emailService.SendEmailAsync(user.Email, "Confirm your account", body);
+
+            Console.WriteLine($"TOKEN LENGTH: {token.Length}");
+            Console.WriteLine($"RAW TOKEN: {token}");
+            return new ServiceResponse<RegisterDTO>
+            {
+                Message = "User Created and Verification. Email Sent.",
                 success = true,
-                Message = "Registration successful",
                 Data = dto
             };
+        }
+        public async Task<ServiceResponse<Object>> ConfirmEmail(ConfirmEmailDto dto)
+        {
+            var user = await _userManager.FindByIdAsync(dto.UserId);
+            if (user == null)
+            {
+                throw new NotFoundException("User Not Found");
+            }
+            if (user.EmailConfirmed)
+            {
+                throw new ConflictException("Account already verfied");
+            }
+            var confirmAccount = await _userManager.ConfirmEmailAsync(user, dto.Token);
+            if (!confirmAccount.Succeeded)
+            {
+                var errors = confirmAccount.Errors.Select(e => e.Description).ToList();
+                Console.WriteLine("CONFIRM EMAIL ERRORS: " + string.Join(" | ", errors));
+                throw new ValidationException(errors);
+            }
+            var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+            var encodedToken = WebUtility.UrlEncode(token);
 
+            return new ServiceResponse<object>
+            {
+                Data = new
+                {
+                    userId = user.Id,
+                    token = encodedToken
+                },
+                success = true,
+                Message = "Account Confirmed"
+            };
 
         }
+
+
 
     }
 }

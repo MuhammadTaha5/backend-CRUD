@@ -1,4 +1,4 @@
-
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -6,6 +6,9 @@ using MyFirstAPI.Data;
 using MyFirstAPI.Models;
 using MyFirstAPI.Models.DTOs;
 using MyFirstAPI.Services;
+using StudentManagement.DTOs;
+using StudentManagement.Exceptions;
+using StudentManagement.Services;
 using StudentManagement.Services.Auth;
 
 [ApiController]
@@ -13,30 +16,11 @@ using StudentManagement.Services.Auth;
 public class AuthController : ControllerBase
 {
     private readonly IAuthService _authService;
-    public AuthController(IAuthService authService)
+    private readonly IConfiguration _config;
+    public AuthController(IAuthService authService, IConfiguration configuration)
     {
         _authService = authService;
-    }
-
-    // POST api/auth/register
-    [HttpPost("register")]
-    public async Task<ActionResult> Register(RegisterDTO dto)
-    {
-        if (!ModelState.IsValid)
-        {
-            return BadRequest(ModelState);
-            
-        }
-        try
-        {
-            var registerService = _authService.Register(dto);
-            return Ok(registerService);
-        }
-        catch (Exception e)
-        {
-            return BadRequest(e.Message);
-        }
-          
+        _config = configuration;
     }
 
     // POST api/auth/login
@@ -55,7 +39,69 @@ public class AuthController : ControllerBase
         {
             return Unauthorized(new { message = excep.Message });
         }
+    
 
+    }
+    [HttpPost("registerUser")]
+    public async Task<IActionResult> RegisterUser(RegisterDTO dto)
+    {
+        try
+        {
+            var registerUser = await _authService.RegisterUser(dto);
+            return Ok(registerUser);
+        }
+        catch (ConflictException e)
+        {
+            return Conflict(e.Message);
+        }
+        catch (Exception e)
+        {
+            return BadRequest(e.Message);
+        }
+
+
+    }
+
+    [HttpGet("confirm-email")]
+    [AllowAnonymous]
+    public async Task<ActionResult> ConfirmEmail([FromQuery] string userId, [FromQuery] string token)
+    {
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(ModelState);
+        }
+        try
+        {
+            ConfirmEmailDto confirmEmail = new ConfirmEmailDto
+            {
+                UserId = userId,
+                Token = token
+            };
+            var userConfirm = await _authService.ConfirmEmail(confirmEmail);
+            return Ok(userConfirm);
+        }
+        catch (Exception e)
+        {
+            return BadRequest(new ServiceResponse<String>
+            {
+                success = false,
+                Data = null,
+                Message = e.Message
+            });
+        }
+
+    }
+    [HttpPost("test-email")]
+    [AllowAnonymous]
+    public async Task<IActionResult> TestEmail([FromServices] IEmailService emailService, [FromQuery] string email)
+    {
+        await emailService.SendEmailAsync(
+            email,
+             "Email from StudentHub(Taha)",
+             "<h1>Hello</h1><p>How Are You?</p>"
+        );
+
+        return Ok("Email Sent");
     }
 
 

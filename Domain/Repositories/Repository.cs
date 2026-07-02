@@ -1,16 +1,15 @@
 using Microsoft.EntityFrameworkCore;
 using MyFirstAPI.Data;
 using MyFirstAPI.Models;
+using StudentManagement.DTOs;
 
 namespace StudentManagement.Repositories
 {
     public class Repository<T> : IRepository<T> where T : class
     {
-        private readonly ApplicationDbContext _applicationDbContext;
         private readonly DbSet<T> _dbTable;
         public Repository(ApplicationDbContext applicationDbContext)
         {
-            _applicationDbContext = applicationDbContext;
             _dbTable = applicationDbContext.Set<T>();
         }
         public async Task<T> AddAsync(T entity)
@@ -19,20 +18,17 @@ namespace StudentManagement.Repositories
             return entity;
         }
 
-        public async Task<T?> DeleteAsync(T entity)
+        public async Task<bool> DeleteAsync(T entity)
         {
-            if(entity!=null)
-            {
-                _dbTable.Remove(entity);
-                return entity;
-            }
-            return null;
+            if (entity == null) return false;
+            _dbTable.Remove(entity);
+            return true; 
         }
 
         public async Task<bool> ExistsAsync(int id)
         {
             var exists = await _dbTable.FindAsync(id);
-            if(exists==null)
+            if (exists == null)
             {
                 return false;
             }
@@ -52,7 +48,25 @@ namespace StudentManagement.Repositories
         public async Task UpdateAsync(T entity)
         {
             _dbTable.Update(entity);
-            
+
+        }
+        public virtual async Task<PagedResult<T>> GetQueryAsync(QueryParams queryParams)
+        {
+            var query = _dbTable.AsQueryable();
+
+            var total = await query.CountAsync();
+            var items = await query
+                .Skip((queryParams.Page - 1) * queryParams.PageSize)
+                .Take(queryParams.PageSize)
+                .ToListAsync();
+            Console.WriteLine("Hellohere");
+            return new PagedResult<T>
+            {
+                Items = items,
+                TotalCount = total,
+                PageNumber = queryParams.Page,
+                PageSize = queryParams.PageSize
+            };
         }
 
     }
