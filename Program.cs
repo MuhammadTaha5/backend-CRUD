@@ -10,6 +10,8 @@ using StudentManagement.Repositories;
 using StudentManagement.Services.Auth;
 using StudentManagement;
 using StudentManagement.Domain.Repositories;
+using StudentManagement.Services;
+using StudentManagement.Domain.Models;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -53,7 +55,8 @@ builder.Services.AddAuthentication(options =>
 
 builder.Services.AddAuthorization();
 builder.Services.AddScoped<TokenService>();
-
+builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
+builder.Services.AddScoped<IEmailService, SmtpEmailService>();
 
 builder.Services.AddSwaggerGen();
 builder.Services.AddControllers();
