@@ -53,62 +53,36 @@ namespace StudentManagement.Services.Auth
             });
         }
 
-        public async Task<ServiceResponse<RegisterDTO>> Register(RegisterDTO dto)
-        {
-            var existingUser = await _userManager.FindByEmailAsync(dto.Email);
-            if (existingUser != null)
-            {
-                throw new ConflictException("Email already registered");
-            }
-            var user = new AppUser
-            {
-                FullName = dto.FullName,
-                Email = dto.Email,
-                UserName = dto.Email  // Identity requires UserName
-            };
-            var result = await _userManager.CreateAsync(user, dto.Password);
-            if (!result.Succeeded)
-            {
-                var errors = result.Errors.Select(e => e.Description);
-                throw new ValidationException(errors);
-            }
-            await _userManager.AddToRoleAsync(user, "Student");
-            return new ServiceResponse<RegisterDTO>{
-                success = true,
-                Message = "Registration successful",
-                Data = dto
-            };
-
-
-        }
-        
         public async Task<ServiceResponse<RegisterDTO>> RegisterUser(RegisterDTO dto)
         {
             var existingUser = await _userManager.FindByEmailAsync(dto.Email);
-            if(existingUser!=null)
+            if (existingUser != null)
             {
                 throw new ConflictException("User Already Registered");
             }
             AppUser user = new AppUser
             {
-                UserName=dto.Email,
+                UserName = dto.Email,
                 Email = dto.Email,
                 FullName = dto.FullName,
                 EmailConfirmed = false
             };
             var result = await _userManager.CreateAsync(user);
-            if(!result.Succeeded)
+            if (!result.Succeeded)
             {
                 var errors = result.Errors.Select(e => e.Description);
                 throw new ValidationException(errors);
             }
             var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
             var encodedToken = WebUtility.UrlEncode(token);
-            var confirmLink = $"{_config["FrontendUrl"]}/confirm-account?userId={user.Id}&token={encodedToken}";
-            
+            var confirmLink = $"{_config["FrontendUrl"]}/api/auth/confirm-email?userId={user.Id}&token={encodedToken}";
+
             var body = $"<p>Hi {user.FullName},</p><p>Click below to set your password and activate your account:</p><a href='{confirmLink}'>Confirm Account</a>";
 
             await _emailService.SendEmailAsync(user.Email, "Confirm your account", body);
+
+            Console.WriteLine($"TOKEN LENGTH: {token.Length}");
+            Console.WriteLine($"RAW TOKEN: {token}");
             return new ServiceResponse<RegisterDTO>
             {
                 Message = "User Created and Verification. Email Sent.",
@@ -116,41 +90,40 @@ namespace StudentManagement.Services.Auth
                 Data = dto
             };
         }
-        public async Task<ServiceResponse<String>> ConfirmEmail(ConfirmEmailDto dto)
+        public async Task<ServiceResponse<Object>> ConfirmEmail(ConfirmEmailDto dto)
         {
             var user = await _userManager.FindByIdAsync(dto.UserId);
-            if(user==null)
+            if (user == null)
             {
                 throw new NotFoundException("User Not Found");
             }
-            if(user.EmailConfirmed)
+            if (user.EmailConfirmed)
             {
                 throw new ConflictException("Account already verfied");
             }
             var confirmAccount = await _userManager.ConfirmEmailAsync(user, dto.Token);
             if (!confirmAccount.Succeeded)
             {
-                var errors = confirmAccount.Errors.Select(e => e.Description);
+                var errors = confirmAccount.Errors.Select(e => e.Description).ToList();
+                Console.WriteLine("CONFIRM EMAIL ERRORS: " + string.Join(" | ", errors));
                 throw new ValidationException(errors);
             }
-            var confirmPassword = await _userManager.AddPasswordAsync(user, dto.NewPassword);
-            if(!confirmPassword.Succeeded)
+            var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+            var encodedToken = WebUtility.UrlEncode(token);
+
+            return new ServiceResponse<object>
             {
-                var errors = confirmPassword.Errors.Select(e => e.Description);
-                throw new ValidationException(errors);   
-            }
-            return new ServiceResponse<string>
-            {
-                Data=user.Id,
+                Data = new
+                {
+                    userId = user.Id,
+                    token = encodedToken
+                },
                 success = true,
                 Message = "Account Confirmed"
-                
             };
 
-
-
         }
-        
+
 
 
     }

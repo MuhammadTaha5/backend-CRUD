@@ -1,4 +1,3 @@
-
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -7,6 +6,7 @@ using MyFirstAPI.Data;
 using MyFirstAPI.Models;
 using MyFirstAPI.Models.DTOs;
 using MyFirstAPI.Services;
+using StudentManagement.DTOs;
 using StudentManagement.Exceptions;
 using StudentManagement.Services;
 using StudentManagement.Services.Auth;
@@ -22,28 +22,6 @@ public class AuthController : ControllerBase
         _authService = authService;
         _config = configuration;
     }
-
-    // POST api/auth/register
-    [HttpPost("register")]
-    public async Task<ActionResult> Register(RegisterDTO dto)
-    {
-        if (!ModelState.IsValid)
-        {
-            return BadRequest(ModelState);
-
-        }
-        try
-        {
-            var registerService = _authService.Register(dto);
-            return Ok(registerService);
-        }
-        catch (Exception e)
-        {
-            return BadRequest(e.Message);
-        }
-
-    }
-
 
     // POST api/auth/login
     [HttpPost("login")]
@@ -61,6 +39,7 @@ public class AuthController : ControllerBase
         {
             return Unauthorized(new { message = excep.Message });
         }
+    
 
     }
     [HttpPost("registerUser")]
@@ -79,8 +58,38 @@ public class AuthController : ControllerBase
         {
             return BadRequest(e.Message);
         }
-        
-        
+
+
+    }
+
+    [HttpGet("confirm-email")]
+    [AllowAnonymous]
+    public async Task<ActionResult> ConfirmEmail([FromQuery] string userId, [FromQuery] string token)
+    {
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(ModelState);
+        }
+        try
+        {
+            ConfirmEmailDto confirmEmail = new ConfirmEmailDto
+            {
+                UserId = userId,
+                Token = token
+            };
+            var userConfirm = await _authService.ConfirmEmail(confirmEmail);
+            return Ok(userConfirm);
+        }
+        catch (Exception e)
+        {
+            return BadRequest(new ServiceResponse<String>
+            {
+                success = false,
+                Data = null,
+                Message = e.Message
+            });
+        }
+
     }
     [HttpPost("test-email")]
     [AllowAnonymous]
@@ -91,7 +100,7 @@ public class AuthController : ControllerBase
              "Email from StudentHub(Taha)",
              "<h1>Hello</h1><p>How Are You?</p>"
         );
-    
+
         return Ok("Email Sent");
     }
 
