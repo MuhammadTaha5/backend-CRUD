@@ -10,5 +10,6 @@ namespace StudentManagement.Services.Auth
         public Task<ServiceResponse<RegisterDTO>> RegisterUser(RegisterDTO dto);
         public Task<ServiceResponse<Object>> ConfirmEmail(ConfirmEmailDto dto);
         public Task<ServiceResponse<AuthResponseDTO>> SetPassword(SetPasswordDto dto);
+        public Task<ServiceResponse<string>> ForgotPassword(ForgotPasswordDto dto);
     }
 }

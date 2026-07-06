@@ -39,7 +39,7 @@ public class AuthController : ControllerBase
         {
             return Unauthorized(new { message = excep.Message });
         }
-    
+
 
     }
     [HttpPost("registerUser")]
@@ -91,6 +91,59 @@ public class AuthController : ControllerBase
         }
 
     }
+    [HttpPost("set-password")]
+    [AllowAnonymous]
+    public async Task<ActionResult<ServiceResponse<AuthService>>> SetPassword([FromBody] SetPasswordDto setPasswordDto)
+    {
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(ModelState);
+        }
+        try
+        {
+            var setPassword = await _authService.SetPassword(setPasswordDto);
+            return Ok(setPassword);
+        }
+        catch (ValidationException e)
+        {
+            return BadRequest(e.Message);
+        }
+        catch (NotFoundException e)
+        {
+            return BadRequest(new ServiceResponse<String>
+            {
+                success = false,
+                Data = null,
+                Message = e.Message
+            });
+        }
+
+
+
+    }
+    [HttpPost("forgot-password")]
+    [AllowAnonymous]
+    public async Task<IActionResult> ForgotPassword(ForgotPasswordDto dto)
+    {
+        try
+        {
+            var response = await _authService.ForgotPassword(dto);
+            return Ok(response);
+            
+        }
+        catch (Exception e)
+        {
+            return BadRequest(new ServiceResponse<string>
+            {
+               Data = null,
+               success = false,
+               Message = e.Message 
+            });
+        }
+  
+    }
+
+
     [HttpPost("test-email")]
     [AllowAnonymous]
     public async Task<IActionResult> TestEmail([FromServices] IEmailService emailService, [FromQuery] string email)

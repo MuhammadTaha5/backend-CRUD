@@ -81,8 +81,6 @@ namespace StudentManagement.Services.Auth
 
             await _emailService.SendEmailAsync(user.Email, "Confirm your account", body);
 
-            Console.WriteLine($"TOKEN LENGTH: {token.Length}");
-            Console.WriteLine($"RAW TOKEN: {token}");
             return new ServiceResponse<RegisterDTO>
             {
                 Message = "User Created and Verification. Email Sent.",
@@ -110,6 +108,8 @@ namespace StudentManagement.Services.Auth
             }
             var token = await _userManager.GeneratePasswordResetTokenAsync(user);
             var encodedToken = WebUtility.UrlEncode(token);
+            Console.WriteLine($"TOKEN LENGTH: {token.Length}");
+            Console.WriteLine($"RAW TOKEN: {token}");
 
             return new ServiceResponse<object>
             {
@@ -134,6 +134,7 @@ namespace StudentManagement.Services.Auth
             if (!setPassword.Succeeded)
             {
                 var errors = setPassword.Errors.Select(e => e.Description).ToList();
+                Console.WriteLine("Password ERRORS: " + string.Join(" | ", errors));
                 throw new ValidationException(errors);
             }
             await _userManager.AddToRoleAsync(user, "Student");
@@ -149,6 +150,29 @@ namespace StudentManagement.Services.Auth
                 },
                 success = true,
                 Message = "Logged in Successfully. Token Generated"
+            };
+        }
+        public async Task<ServiceResponse<string>> ForgotPassword(ForgotPasswordDto dto)
+        {
+            var user = await _userManager.FindByEmailAsync(dto.Email);
+            if (user==null || !user.EmailConfirmed)
+            {
+                throw new ValidationException(new List<string>{"Password reset failed"});
+            }
+            var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+            var encodedToken = WebUtility.UrlEncode(token);
+
+            var resetLink = $"{_config["FrontendUrl"]}/api/auth/set-password?userId={user.Id}&token={encodedToken}";
+
+            var body = $"<p>Hi {user.FullName},</p><p>Click below to reset your password:</p><a href='{resetLink}'>Reset Password</a>";
+            Console.WriteLine($"TOKEN LENGTH: {token.Length}");
+            Console.WriteLine($"RAW TOKEN: {token}");
+            await _emailService.SendEmailAsync(user.Email, "Reset your password", body);
+            return new ServiceResponse<string>
+            {
+                Data = null,
+                success = true, 
+                Message = "Password reset Email sent"
             };
         }
 
