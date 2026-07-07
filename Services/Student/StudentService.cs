@@ -74,23 +74,9 @@ namespace MyFirstAPI.Services
             if (rowsAffected > 0)
             {
                 var responseDTO = _mapper.Map<StudentResponseDTO>(getStudentRecord);
-
-                return new ServiceResponse<StudentResponseDTO>
-                {
-                    Data = responseDTO,
-                    Message = "Record removed",
-                    success = true
-                };
-
+                return ServiceResponse<StudentResponseDTO>.SuccessResponse(responseDTO, "Record removed");
             }
-            return new ServiceResponse<StudentResponseDTO>
-                {
-                    Data = null,
-                    Message = "No Record Removed",
-                    success = false
-                };
-
-
+            return ServiceResponse<StudentResponseDTO>.FailResponse("No Record Removed");
         }
         public async Task<ServiceResponse<StudentResponseDTO>> UpdateStudent(int id, UpdateStudentDTO updatedStudent)
         {
@@ -100,23 +86,14 @@ namespace MyFirstAPI.Services
             // If not found
             if (existingStudent == null)
             {
-                return new ServiceResponse<StudentResponseDTO>
-                {
-                    success = false,
-                    Data = null,
-                    Message = $"No User Found with Id {id}"
-                };
+                return ServiceResponse<StudentResponseDTO>.NotFoundResponse($"No User Found with Id {id}");
             }
             else
             {
                 _mapper.Map(updatedStudent, existingStudent);
                 await _unitOfWork.SaveAsync();
                 var responseDTO = _mapper.Map<StudentResponseDTO>(existingStudent);
-                return new ServiceResponse<StudentResponseDTO>
-                {
-                    Message = "Record updated",
-                    Data = responseDTO
-                };
+                return ServiceResponse<StudentResponseDTO>.SuccessResponse(responseDTO,"Record updated");
 
             }
 
@@ -132,32 +109,16 @@ namespace MyFirstAPI.Services
             {
                 var serviceResponseDTO = _mapper.Map<List<StudentResponseDTO>>(getRecord);
                 
-                return new ServiceResponse<List<StudentResponseDTO>>
-                {
-                    Data = serviceResponseDTO,
-                    Message = "Record Found",
-                    success = true
-                };
+                return ServiceResponse<List<StudentResponseDTO>>.SuccessResponse(serviceResponseDTO,"Record Found");
             }
             
-            return new ServiceResponse<List<StudentResponseDTO>>
-                {
-                    Data = null,
-                    success = false,
-                    Message = "No record found"
-                };
+            return ServiceResponse<List<StudentResponseDTO>>.FailResponse("No record found");
 
         }
         public async Task<ServiceResponse<PagedResult<Student>>> GetStudentQuery(QueryParams p)
         {
             var result = await _unitOfWork.StudentRepo.GetQueryAsync(p);
-
-            return new ServiceResponse<PagedResult<Student>>
-            {
-                Data = result,
-                success = true
-
-            };
+            return ServiceResponse<PagedResult<Student>>.SuccessResponse(result, "Records found");
 
         }
     }

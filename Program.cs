@@ -61,7 +61,6 @@ builder.Services.AddScoped<IEmailService, SmtpEmailService>();
 builder.Services.AddSwaggerGen();
 builder.Services.AddControllers();
 
-builder.Services.AddOpenApi();
 
 
 builder.Services.AddScoped<IStudentService, StudentService>();
@@ -74,11 +73,6 @@ builder.Services.AddScoped<IStudentRepository, StudentRepository>();
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 var app = builder.Build();
-
-if (app.Environment.IsDevelopment())
-{
-    app.MapOpenApi();
-}
 
 
 // Enable Swagger

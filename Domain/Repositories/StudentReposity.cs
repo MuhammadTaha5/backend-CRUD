@@ -48,20 +48,9 @@ namespace StudentManagement.Domain.Repositories
 
             var total = await query.CountAsync();
 
-            var items = await query
-                .Skip((queryParams.Page - 1) * queryParams.PageSize)
-                .Take(queryParams.PageSize)
-                .ToListAsync();
-            
+            var result = await query.ToPagedResultAsync(queryParams.Page, queryParams.PageSize);
 
-            return new PagedResult<Student>
-            {
-                Items = items,
-                TotalCount = total,
-                PageNumber = queryParams.Page,
-                PageSize = queryParams.PageSize
-                
-            };
+            return result;
         }
     }
 
