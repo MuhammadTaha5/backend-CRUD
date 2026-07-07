@@ -10,16 +10,13 @@ namespace MyFirstAPI.Services
     public class StudentService : IStudentService
     {
         private readonly ApplicationDbContext _dbContext;
-        public List<Student> students;
-        private readonly IRepository<Student> _repository;
         private readonly IUnitOfWork _unitOfWork;
         private readonly IMapper _mapper;
-        public StudentService(IMapper mapper, ApplicationDbContext dbContext, IRepository<Student> repo, IUnitOfWork unitOfWork)
+        public StudentService(IMapper mapper, ApplicationDbContext dbContext, IUnitOfWork unitOfWork)
 
         {
             _dbContext = dbContext;
             _mapper = mapper;
-            _repository = repo;
             _unitOfWork = unitOfWork;
         }
 
