@@ -10,11 +10,13 @@ namespace StudentManagement.Domain.Repositories
     {
         protected override string[] SearchableProperties => new[] { "Name", "Email" };
         protected override string[] SortableProperties => new[] { "Name", "Gpa", "Age", "Id" };
-        private readonly DbSet<Student> db_table;
-        public StudentRepository(ApplicationDbContext context) : base(context)
+        public StudentRepository(ApplicationDbContext applicationDbContext) : base(applicationDbContext)
         {
-            db_table = context.Set<Student>();
         }
+
+
+        
+        
     }
 
 
