@@ -13,10 +13,6 @@ namespace StudentManagement.Domain.Repositories
         public StudentRepository(ApplicationDbContext applicationDbContext) : base(applicationDbContext)
         {
         }
-
-
-        
-        
     }
 
 
