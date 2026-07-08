@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Identity;
 using MyFirstAPI.Models;
 using MyFirstAPI.Models.DTOs;
 using MyFirstAPI.Services;
+using StudentManagement.Constants;
 using StudentManagement.DTOs;
 using StudentManagement.Exceptions;
 
@@ -137,7 +138,7 @@ namespace StudentManagement.Services.Auth
                 Console.WriteLine("Password ERRORS: " + string.Join(" | ", errors));
                 throw new ValidationException(errors);
             }
-            await _userManager.AddToRoleAsync(user, "Student");
+            await _userManager.AddToRoleAsync(user, Roles.Student);
             var accessToken = _tokenService.GenerateAccessToken(user, new List<string>{"Student"});
 
             return new ServiceResponse<AuthResponseDTO>

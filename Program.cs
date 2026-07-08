@@ -12,6 +12,7 @@ using StudentManagement;
 using StudentManagement.Domain.Repositories;
 using StudentManagement.Services;
 using StudentManagement.Domain.Models;
+using StudentManagement.Constants;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -87,7 +88,7 @@ app.MapControllers();
 using (var scope = app.Services.CreateScope())
 {
     var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
-    foreach (var role in new[] { "Admin", "Student", "Teacher" })
+    foreach (var role in Roles.All)
     {
         if (!await roleManager.RoleExistsAsync(role))
             await roleManager.CreateAsync(new IdentityRole(role));
