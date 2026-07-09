@@ -8,9 +8,9 @@ namespace StudentManagement.Domain.Repositories
         public static async Task<PagedResult<T>> ToPagedResultAsync<T>(
             this IQueryable<T> query, int pageNumber, int pageSize)
         {
-            var totalCount = await query.CountAsync();
+            int totalCount = await query.CountAsync();
 
-            var items = await query
+            List<T> items = await query
                 .Skip((pageNumber - 1) * pageSize)
                 .Take(pageSize)
                 .ToListAsync();

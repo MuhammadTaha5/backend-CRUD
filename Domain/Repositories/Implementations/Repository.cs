@@ -33,7 +33,7 @@ namespace StudentManagement.Repositories
 
         public async Task<bool> ExistsAsync(int id)
         {
-            var exists = await _dbTable.FindAsync(id);
+            T? exists = await _dbTable.FindAsync(id);
             if (exists == null)
             {
                 return false;
@@ -70,14 +70,14 @@ namespace StudentManagement.Repositories
             if (string.IsNullOrWhiteSpace(search) || SearchableProperties.Length == 0)
                 return query;
 
-            var predicate = string.Join(" || ",
+            string predicate = string.Join(" || ",
                 SearchableProperties.Select(p => $"{p}.ToLower().Contains(@0)"));
 
             return query.Where(predicate, search.ToLower());
         }
         protected virtual IQueryable<T> ApplySort(IQueryable<T> query, string? sortBy, bool desc)
         {
-            var field = !string.IsNullOrWhiteSpace(sortBy) &&
+            string field = !string.IsNullOrWhiteSpace(sortBy) &&
                         SortableProperties.Contains(sortBy, StringComparer.OrdinalIgnoreCase)
                 ? SortableProperties.First(p => p.Equals(sortBy, StringComparison.OrdinalIgnoreCase))
                 : DefaultSort;

@@ -17,8 +17,8 @@ namespace StudentManagement.Services.Auth
         private readonly TokenService _tokenService;
         private readonly IConfiguration _config;
         private readonly IEmailService _emailService;
-        private readonly Mapper _mapper;
-        public AuthService(IConfiguration config, TokenService tokenService, UserManager<AppUser> userManager, IEmailService emailService, Mapper mapper)
+        private readonly IMapper _mapper;
+        public AuthService(IConfiguration config, TokenService tokenService, UserManager<AppUser> userManager, IEmailService emailService, IMapper mapper)
         {
             _userManager = userManager;
             _tokenService = tokenService;

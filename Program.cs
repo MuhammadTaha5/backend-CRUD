@@ -15,7 +15,7 @@ using StudentManagement.Domain.Models;
 using StudentManagement.Constants;
 
 
-var builder = WebApplication.CreateBuilder(args);
+WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 // --- Identity ---
 builder.Services.AddIdentity<AppUser, IdentityRole>(options =>
 {
@@ -31,8 +31,8 @@ builder.Services.AddIdentity<AppUser, IdentityRole>(options =>
 .AddDefaultTokenProviders();
 
 // --- JWT Authentication ---
-var jwtSettings = builder.Configuration.GetSection("JwtSettings");
-var secret = jwtSettings["Secret"]!;
+IConfigurationSection jwtSettings = builder.Configuration.GetSection("JwtSettings");
+string secret = jwtSettings["Secret"]!;
 
 builder.Services.AddAuthentication(options =>
 {
@@ -73,7 +73,7 @@ builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IStudentRepository, StudentRepository>();
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
-var app = builder.Build();
+WebApplication app = builder.Build();
 
 
 // Enable Swagger
@@ -85,10 +85,10 @@ app.MapControllers();
 
 
 // --- Seed roles on startup ---
-using (var scope = app.Services.CreateScope())
+using (IServiceScope scope = app.Services.CreateScope())
 {
-    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
-    foreach (var role in Roles.All)
+    RoleManager<IdentityRole> roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+    foreach (string role in Roles.All)
     {
         if (!await roleManager.RoleExistsAsync(role))
             await roleManager.CreateAsync(new IdentityRole(role));

@@ -35,7 +35,7 @@ namespace MyFirstAPI.Services
         public async Task<ServiceResponse<List<StudentResponseDTO>>> GetAllStudents()
         {
             IEnumerable<Student> allStudents = await _unitOfWork.StudentRepo.GetAllAsync();
-            var studentResponseData = _mapper.Map<List<StudentResponseDTO>>(allStudents);
+            List<StudentResponseDTO> studentResponseData = _mapper.Map<List<StudentResponseDTO>>(allStudents);
 
             return ServiceResponse<List<StudentResponseDTO>>.SuccessResponse(studentResponseData, "Students Retrieved Successfully");
         }
