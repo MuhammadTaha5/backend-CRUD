@@ -147,12 +147,14 @@ namespace StudentManagement.Services.Auth
 
         }
         /// <summary>
-        /// 
+        /// Check the token in param, validate and set new Password
         /// </summary>
-        /// <param name="dto"></param>
-        /// <returns></returns>
-        /// <exception cref="NotFoundException"></exception>
-        /// <exception cref="ValidationException"></exception>
+        /// <param name="dto">Takes userId, resetPasword token, New Password, Conform password</param>
+        /// <returns> <see cref="ServiceResponse{AuthResponseDTO}"/> 
+        /// Returns jwt access token in response with username and email.
+        /// </returns>
+        /// <exception cref="NotFoundException">thrown if no user exist with this Id.</exception>
+        /// <exception cref="ValidationException">thrown if the password reset token is not validated.</exception>
         public async Task<ServiceResponse<AuthResponseDTO>> SetPassword(SetPasswordDto dto)
         {
             AppUser? user = await _userManager.FindByIdAsync(dto.UserId);
@@ -161,10 +163,11 @@ namespace StudentManagement.Services.Auth
                 throw new NotFoundException("No User Found");
             }
             IdentityResult setPassword = await _userManager.ResetPasswordAsync(user, dto.Token, dto.Password);
+            //if token not validated or issue in setting new password.
             if (!setPassword.Succeeded)
             {
                 List<string> errors = setPassword.Errors.Select(e => e.Description).ToList();
-                Console.WriteLine("Password ERRORS: " + string.Join(" | ", errors));
+                
                 throw new ValidationException(errors);
             }
             await _userManager.AddToRoleAsync(user, Roles.Student);
@@ -178,6 +181,15 @@ namespace StudentManagement.Services.Auth
                 }, "Logged in Successfully. Token Generated");
             
         }
+        /// <summary>
+        /// Email check and send the password reset email with verification token. and if anyother 
+        /// error occur giving the same message
+        /// </summary>
+        /// <param name="dto">
+        /// User Id, token and new Password.
+        /// </param>
+        /// <returns> <see cref="ServiceResponse{string}" /> confirming the email was sent.</returns>
+        /// <exception cref="ValidationException">Thown if the token validation or any other setting password error occurs</exception>
         public async Task<ServiceResponse<string>> ForgotPassword(ForgotPasswordDto dto)
         {
             AppUser? user = await _userManager.FindByEmailAsync(dto.Email);
