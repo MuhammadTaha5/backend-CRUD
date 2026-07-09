@@ -84,7 +84,7 @@ namespace StudentManagement.Services.Auth
         }
         public async Task<ServiceResponse<Object>> ConfirmEmail(ConfirmEmailDto dto)
         {
-            var user = await _userManager.FindByIdAsync(dto.UserId);
+            AppUser? user = await _userManager.FindByIdAsync(dto.UserId);
             if (user == null)
             {
                 throw new NotFoundException("User Not Found");
@@ -93,84 +93,70 @@ namespace StudentManagement.Services.Auth
             {
                 throw new ConflictException("Account already verfied");
             }
-            var confirmAccount = await _userManager.ConfirmEmailAsync(user, dto.Token);
+            IdentityResult confirmAccount = await _userManager.ConfirmEmailAsync(user, dto.Token);
             if (!confirmAccount.Succeeded)
             {
-                var errors = confirmAccount.Errors.Select(e => e.Description).ToList();
+                List<string> errors = confirmAccount.Errors.Select(e => e.Description).ToList();
                 Console.WriteLine("CONFIRM EMAIL ERRORS: " + string.Join(" | ", errors));
                 throw new ValidationException(errors);
             }
-            var token = await _userManager.GeneratePasswordResetTokenAsync(user);
-            var encodedToken = WebUtility.UrlEncode(token);
+            string token = await _userManager.GeneratePasswordResetTokenAsync(user);
+            string encodedToken = WebUtility.UrlEncode(token);
             Console.WriteLine($"TOKEN LENGTH: {token.Length}");
             Console.WriteLine($"RAW TOKEN: {token}");
 
-            return new ServiceResponse<object>
-            {
-                Data = new
+            return ServiceResponse<object>.SuccessResponse(new
                 {
                     userId = user.Id,
                     token = encodedToken
-                },
-                success = true,
-                Message = "Email Confirmed"
-            };
+                }, "Email Confirmed");
+            
 
         }
         public async Task<ServiceResponse<AuthResponseDTO>> SetPassword(SetPasswordDto dto)
         {
-            var user = await _userManager.FindByIdAsync(dto.UserId);
+            AppUser? user = await _userManager.FindByIdAsync(dto.UserId);
             if (user==null)
             {
                 throw new NotFoundException("No User Found");
             }
-            var setPassword = await _userManager.ResetPasswordAsync(user, dto.Token, dto.Password);
+            IdentityResult setPassword = await _userManager.ResetPasswordAsync(user, dto.Token, dto.Password);
             if (!setPassword.Succeeded)
             {
-                var errors = setPassword.Errors.Select(e => e.Description).ToList();
+                List<string> errors = setPassword.Errors.Select(e => e.Description).ToList();
                 Console.WriteLine("Password ERRORS: " + string.Join(" | ", errors));
                 throw new ValidationException(errors);
             }
             await _userManager.AddToRoleAsync(user, Roles.Student);
-            var accessToken = _tokenService.GenerateAccessToken(user, new List<string>{"Student"});
+            string accessToken = _tokenService.GenerateAccessToken(user, new List<string>{"Student"});
 
-            return new ServiceResponse<AuthResponseDTO>
-            {
-                Data = new AuthResponseDTO
+            return ServiceResponse<AuthResponseDTO>.SuccessResponse(new AuthResponseDTO
                 {
                     AccessToken = accessToken,
                     Email = user.Email,
                     FullName = user.FullName
-                },
-                success = true,
-                Message = "Logged in Successfully. Token Generated"
-            };
+                }, "Logged in Successfully. Token Generated");
+            
         }
         public async Task<ServiceResponse<string>> ForgotPassword(ForgotPasswordDto dto)
         {
-            var user = await _userManager.FindByEmailAsync(dto.Email);
+            AppUser? user = await _userManager.FindByEmailAsync(dto.Email);
             if (user==null || !user.EmailConfirmed)
             {
                 throw new ValidationException(new List<string>{"Password reset failed"});
             }
-            var token = await _userManager.GeneratePasswordResetTokenAsync(user);
-            var encodedToken = WebUtility.UrlEncode(token);
+            string token = await _userManager.GeneratePasswordResetTokenAsync(user);
+            string encodedToken = WebUtility.UrlEncode(token);
 
-            var resetLink = $"{_config["FrontendUrl"]}/api/auth/set-password?userId={user.Id}&token={encodedToken}";
+            string resetLink = $"{_config["FrontendUrl"]}/api/auth/set-password?userId={user.Id}&token={encodedToken}";
 
-            var body = $"<p>Hi {user.FullName},</p><p>Click below to reset your password:</p><a href='{resetLink}'>Reset Password</a>";
+            string body = $"<p>Hi {user.FullName},</p><p>Click below to reset your password:</p><a href='{resetLink}'>Reset Password</a>";
             Console.WriteLine($"TOKEN LENGTH: {token.Length}");
             Console.WriteLine($"RAW TOKEN: {token}");
             await _emailService.SendEmailAsync(user.Email, "Reset your password", body);
-            return new ServiceResponse<string>
-            {
-                Data = null,
-                success = true, 
-                Message = "Password reset Email sent"
-            };
+            return ServiceResponse<string>.SuccessResponse(null, "Password reset Email sent");
+            
         }
-
-
 
     }
 }
