@@ -23,7 +23,7 @@ namespace StudentManagement.Services.Auth
             _config = config;
             _emailService = emailService;
         }
-        public async Task<AuthResponseDTO> Login(LoginDTO loginDTO)
+        public async Task<ServiceResponse<AuthResponseDTO>> Login(LoginDTO loginDTO)
         {
             var user = await _userManager.FindByEmailAsync(loginDTO.Email);
             if (user == null)
@@ -46,12 +46,11 @@ namespace StudentManagement.Services.Auth
             var roles = await _userManager.GetRolesAsync(user);
             var accessToken = _tokenService.GenerateAccessToken(user, roles);
 
-            return (new AuthResponseDTO
-            {
+            return ServiceResponse<AuthResponseDTO>.SuccessResponse(new AuthResponseDTO{
                 AccessToken = accessToken,
                 Email = user.Email!,
                 FullName = user.FullName
-            });
+            },"Logged in Successfully");
         }
 
         public async Task<ServiceResponse<RegisterDTO>> RegisterUser(RegisterDTO dto)

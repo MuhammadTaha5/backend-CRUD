@@ -24,14 +24,14 @@ namespace MyFirstAPI.Controllers
         [HttpGet]
         public async Task<ActionResult<List<Student>>> GetStudents()
         {
-            var studentsRecord = await _studentService.GetAllStudents();
+            ServiceResponse<List<StudentResponseDTO>> studentsRecord = await _studentService.GetAllStudents();
 
             return Ok(studentsRecord);
         }
         [HttpGet("{stdId}")]
         public async Task<ActionResult> GetStudentById(int stdId)
         {
-            var studentsRecord = await _studentService.GetStudentById(stdId);
+            ServiceResponse<StudentResponseDTO> studentsRecord = await _studentService.GetStudentById(stdId);
             if (!studentsRecord.success)
             {
                 return NotFound(studentsRecord);
@@ -39,16 +39,13 @@ namespace MyFirstAPI.Controllers
             return Ok(studentsRecord);
         }
         [HttpGet("search")]
-        public async Task<ActionResult<Models.Student>> GetStudentByName(string name, int id)
+        public async Task<ActionResult<Student>> GetStudentByName(string name, int id)
         {
-            //Console.WriteLine($"Id: {id}");
             if (string.IsNullOrEmpty(name))
             {
                 return BadRequest("Name is required");
             }
-
-            //Console.WriteLine("Name: " + name);
-            var studentRecord = await _studentService.GetStudentByName(name);
+            ServiceResponse<List<StudentResponseDTO>> studentRecord = await _studentService.GetStudentByName(name);
             Console.Write(studentRecord.Data);
             if (!studentRecord.success)
             {
@@ -63,10 +60,7 @@ namespace MyFirstAPI.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            var result = await _studentService.AddStudent(dto);
-
-
-
+            ServiceResponse<StudentResponseDTO> result = await _studentService.AddStudent(dto);
             return Ok(result);
         }
         [HttpPut("{studentId}")]
@@ -76,15 +70,12 @@ namespace MyFirstAPI.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            var updatedStudent = await _studentService.UpdateStudent(studentId, dto);
-
+            ServiceResponse<StudentResponseDTO> updatedStudent = await _studentService.UpdateStudent(studentId, dto);
 
             if (!updatedStudent.success)
             {
                 return NotFound($"No student found with ID {studentId}");
             }
-
-
             return Ok(updatedStudent);
         }
         [HttpDelete("{id}")]

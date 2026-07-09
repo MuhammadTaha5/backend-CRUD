@@ -98,9 +98,8 @@ namespace MyFirstAPI.Services
 
         public async Task<ServiceResponse<List<StudentResponseDTO>>> GetStudentByName(string name)
         {
-#pragma warning disable CS8602 // Dereference of a possibly null reference.
             var getRecord = await _dbContext.Students.Where(s => s.Name.Contains(name)).ToListAsync();
-#pragma warning restore CS8602 // Dereference of a possibly null reference.
+
 
             if (getRecord.Any())
             {
