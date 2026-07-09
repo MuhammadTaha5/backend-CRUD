@@ -18,7 +18,9 @@ namespace StudentManagement.Services.Auth
         private readonly IConfiguration _config;
         private readonly IEmailService _emailService;
         private readonly IMapper _mapper;
-        public AuthService(IConfiguration config, TokenService tokenService, UserManager<AppUser> userManager, IEmailService emailService, IMapper mapper)
+        public AuthService(IConfiguration config, TokenService tokenService, 
+                            UserManager<AppUser> userManager, IEmailService emailService, 
+                            IMapper mapper)
         {
             _userManager = userManager;
             _tokenService = tokenService;
@@ -26,6 +28,16 @@ namespace StudentManagement.Services.Auth
             _emailService = emailService;
             _mapper = mapper;
         }
+        /// <summary>
+        /// Authenticates a user by email and password and returning a jwt access token on success
+        /// </summary>
+        /// <param name="loginDTO">The Login Credentials(email and Password)</param>
+        /// <returns> A <see cref="ServiceResponse{AuthResponseDTO}" containing the access token and user info </returns>
+        /// <exception cref="UnauthorizedAccessException">
+        /// Thrown exception of unauthorized if the email or password not correct and also 
+        /// if the account is locked
+        /// </exception>
+        /// 
         public async Task<ServiceResponse<AuthResponseDTO>> Login(LoginDTO loginDTO)
         {
             AppUser? user = await _userManager.FindByEmailAsync(loginDTO.Email);
@@ -45,8 +57,9 @@ namespace StudentManagement.Services.Auth
 
             // reset fail count on success
             await _userManager.ResetAccessFailedCountAsync(user);
-
+            //get roles of user from db
             IList<string> roles = await _userManager.GetRolesAsync(user);
+            //generate access token
             string accessToken = _tokenService.GenerateAccessToken(user, roles);
 
             return ServiceResponse<AuthResponseDTO>.SuccessResponse(new AuthResponseDTO{
@@ -55,7 +68,15 @@ namespace StudentManagement.Services.Auth
                 FullName = user.FullName
             },"Logged in Successfully");
         }
-
+        /// <summary>
+        /// Register A user without password and send verification Link through email with
+        /// it user set the password
+        /// </summary>
+        /// <param name="dto">The Registration Details Email, Username, and contact number</param>
+        /// <returns><see cref="ServiceResponse{RegisterDTO}"/> confirming the account is created and verifcation enail is sent</returns>
+        /// <exception cref="ConflictException">Throws if the email already exist</exception>
+        /// <exception cref="ValidationException">thrown if db fails to insert user in db</exception>
+        /// 
         public async Task<ServiceResponse<RegisterDTO>> RegisterUser(RegisterDTO dto)
         {
             AppUser? existingUser = await _userManager.FindByEmailAsync(dto.Email);
@@ -82,6 +103,18 @@ namespace StudentManagement.Services.Auth
             return  ServiceResponse<RegisterDTO>.SuccessResponse(dto, "User Created. Verification Email Sent.");
             
         }
+        /// <summary>
+        /// Confirm if the email is active by sending back the token and user id and 
+        /// validating in db
+        /// 
+        /// </summary>
+        /// <param name="dto">User ID, and email verification token</param>
+        /// <returns><see cref="ServiceResponse{Object}"/> confirming email is verified and set 
+        /// password token is generated.
+        /// </returns>
+        /// <exception cref="NotFoundException">thrown if no user exist with param user id</exception>
+        /// <exception cref="ConflictException">thrown if the user is already verified.</exception>
+        /// <exception cref="ValidationException">thrown it the token is not validated.</exception>
         public async Task<ServiceResponse<Object>> ConfirmEmail(ConfirmEmailDto dto)
         {
             AppUser? user = await _userManager.FindByIdAsync(dto.UserId);
@@ -113,6 +146,13 @@ namespace StudentManagement.Services.Auth
             
 
         }
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="dto"></param>
+        /// <returns></returns>
+        /// <exception cref="NotFoundException"></exception>
+        /// <exception cref="ValidationException"></exception>
         public async Task<ServiceResponse<AuthResponseDTO>> SetPassword(SetPasswordDto dto)
         {
             AppUser? user = await _userManager.FindByIdAsync(dto.UserId);
