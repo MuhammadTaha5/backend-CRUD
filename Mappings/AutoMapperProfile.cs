@@ -1,5 +1,6 @@
 using AutoMapper;
 using MyFirstAPI.Models;
+using MyFirstAPI.Models.DTOs;
 
 public class AutoMapperProfile : Profile
 {
@@ -8,6 +9,7 @@ public class AutoMapperProfile : Profile
         CreateMap<Student, StudentResponseDTO>();
         CreateMap<AddStudentDTO, Student>();
         CreateMap<UpdateStudentDTO, Student>();
+        CreateMap<RegisterDTO, AppUser>();
 
     }
 }

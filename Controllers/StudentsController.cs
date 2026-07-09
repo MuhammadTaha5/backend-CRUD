@@ -74,7 +74,7 @@ namespace MyFirstAPI.Controllers
 
             if (!updatedStudent.success)
             {
-                return NotFound($"No student found with ID {studentId}");
+                return NotFound(updatedStudent);
             }
             return Ok(updatedStudent);
         }
@@ -82,7 +82,7 @@ namespace MyFirstAPI.Controllers
         [Authorize(Roles=Roles.Admin)]
         public async Task<ActionResult> DeleteStudent(int id)
         {
-            var deletedStudent = await _studentService.RemoveStudent(id);
+            ServiceResponse<StudentResponseDTO> deletedStudent = await _studentService.RemoveStudent(id);
             if (!deletedStudent.success)
             {
                 return NotFound(deletedStudent);

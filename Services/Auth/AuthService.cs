@@ -1,4 +1,5 @@
 using System.Net;
+using AutoMapper;
 using Microsoft.AspNetCore.Identity;
 using MyFirstAPI.Models;
 using MyFirstAPI.Models.DTOs;
@@ -16,16 +17,18 @@ namespace StudentManagement.Services.Auth
         private readonly TokenService _tokenService;
         private readonly IConfiguration _config;
         private readonly IEmailService _emailService;
-        public AuthService(IConfiguration config, TokenService tokenService, UserManager<AppUser> userManager, IEmailService emailService)
+        private readonly Mapper _mapper;
+        public AuthService(IConfiguration config, TokenService tokenService, UserManager<AppUser> userManager, IEmailService emailService, Mapper mapper)
         {
             _userManager = userManager;
             _tokenService = tokenService;
             _config = config;
             _emailService = emailService;
+            _mapper = mapper;
         }
         public async Task<ServiceResponse<AuthResponseDTO>> Login(LoginDTO loginDTO)
         {
-            var user = await _userManager.FindByEmailAsync(loginDTO.Email);
+            AppUser? user = await _userManager.FindByEmailAsync(loginDTO.Email);
             if (user == null)
             {
                 throw new UnauthorizedAccessException("Invalid credentials");
@@ -33,7 +36,7 @@ namespace StudentManagement.Services.Auth
             if (await _userManager.IsLockedOutAsync(user))
                 throw new UnauthorizedAccessException("Account locked. Try again later.");
 
-            var passwordValid = await _userManager.CheckPasswordAsync(user, loginDTO.Password);
+            bool passwordValid = await _userManager.CheckPasswordAsync(user, loginDTO.Password);
             if (!passwordValid)
             {
                 await _userManager.AccessFailedAsync(user);
@@ -43,8 +46,8 @@ namespace StudentManagement.Services.Auth
             // reset fail count on success
             await _userManager.ResetAccessFailedCountAsync(user);
 
-            var roles = await _userManager.GetRolesAsync(user);
-            var accessToken = _tokenService.GenerateAccessToken(user, roles);
+            IList<string> roles = await _userManager.GetRolesAsync(user);
+            string accessToken = _tokenService.GenerateAccessToken(user, roles);
 
             return ServiceResponse<AuthResponseDTO>.SuccessResponse(new AuthResponseDTO{
                 AccessToken = accessToken,
@@ -55,38 +58,29 @@ namespace StudentManagement.Services.Auth
 
         public async Task<ServiceResponse<RegisterDTO>> RegisterUser(RegisterDTO dto)
         {
-            var existingUser = await _userManager.FindByEmailAsync(dto.Email);
+            AppUser? existingUser = await _userManager.FindByEmailAsync(dto.Email);
             if (existingUser != null)
             {
                 throw new ConflictException("User Already Registered");
             }
-            AppUser user = new AppUser
-            {
-                UserName = dto.Email,
-                Email = dto.Email,
-                FullName = dto.FullName,
-                EmailConfirmed = false
-            };
-            var result = await _userManager.CreateAsync(user);
+            AppUser user = _mapper.Map<AppUser>(dto);
+            user.EmailConfirmed = false;
+            IdentityResult? result = await _userManager.CreateAsync(user);
             if (!result.Succeeded)
             {
-                var errors = result.Errors.Select(e => e.Description);
+                IEnumerable<string>? errors = result.Errors.Select(e => e.Description);
                 throw new ValidationException(errors);
             }
-            var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
-            var encodedToken = WebUtility.UrlEncode(token);
-            var confirmLink = $"{_config["FrontendUrl"]}/api/auth/confirm-email?userId={user.Id}&token={encodedToken}";
+            string token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+            string encodedToken = WebUtility.UrlEncode(token);
+            string confirmLink = $"{_config["FrontendUrl"]}/api/auth/confirm-email?userId={user.Id}&token={encodedToken}";
 
-            var body = $"<p>Hi {user.FullName},</p><p>Click below to set your password and activate your account:</p><a href='{confirmLink}'>Confirm Account</a>";
+            string body = $"<p>Hi {user.FullName},</p><p>Click below to set your password and activate your account:</p><a href='{confirmLink}'>Confirm Account</a>";
 
-            await _emailService.SendEmailAsync(user.Email, "Confirm your account", body);
+            await _emailService.SendEmailAsync(dto.Email, "Confirm your account", body);
 
-            return new ServiceResponse<RegisterDTO>
-            {
-                Message = "User Created and Verification. Email Sent.",
-                success = true,
-                Data = dto
-            };
+            return  ServiceResponse<RegisterDTO>.SuccessResponse(dto, "User Created. Verification Email Sent.");
+            
         }
         public async Task<ServiceResponse<Object>> ConfirmEmail(ConfirmEmailDto dto)
         {
