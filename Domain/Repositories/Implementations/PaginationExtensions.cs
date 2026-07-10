@@ -17,7 +17,7 @@ namespace StudentManagement.Domain.Repositories
 
             return new PagedResult<T>
             {
-                Items = items,
+                Records = items,
                 TotalCount = totalCount,
                 PageNumber = pageNumber,
                 PageSize = pageSize

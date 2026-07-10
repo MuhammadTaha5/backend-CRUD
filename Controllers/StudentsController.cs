@@ -84,9 +84,12 @@ namespace MyFirstAPI.Controllers
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
-
-            ServiceResponse<StudentResponseDTO> result = await _studentService.AddStudent(dto);
-            return Ok(result);
+            ServiceResponse<StudentResponseDTO> createStudent = await _studentService.AddStudent(dto);
+            if(createStudent.success)
+            {
+                return Ok(createStudent);
+            }
+            return BadRequest(createStudent);
         }
         /// <summary>
         /// Updates the record of students with id, new fields. Admin only endpoint
@@ -145,7 +148,7 @@ namespace MyFirstAPI.Controllers
         [HttpGet("query")]
         public async Task<ActionResult> GetStudentQuery([FromQuery] QueryParams queryParams)
         {
-            ServiceResponse<PagedResult<Student>> result = await _studentService.GetStudentQuery(queryParams);
+            ServiceResponse<PagedResult<StudentResponseDTO>> result = await _studentService.GetStudentQuery(queryParams);
             return Ok(result);
         }
 

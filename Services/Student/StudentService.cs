@@ -4,7 +4,7 @@ using MyFirstAPI.Data;
 using MyFirstAPI.Models;
 using StudentManagement;
 using StudentManagement.DTOs;
-using StudentManagement.Repositories;
+using StudentManagement.Helper.Constants;
 namespace MyFirstAPI.Services
 {
     public class StudentService : IStudentService
@@ -12,11 +12,13 @@ namespace MyFirstAPI.Services
         private readonly ApplicationDbContext _dbContext;
         private readonly IUnitOfWork _unitOfWork;
         private readonly IMapper _mapper;
-        public StudentService(IMapper mapper, ApplicationDbContext dbContext, IUnitOfWork unitOfWork)
+        private readonly ILogger<StudentService> _logger;
+        public StudentService(IMapper mapper, ApplicationDbContext dbContext, IUnitOfWork unitOfWork, ILogger<StudentService> logger)
         {
             _dbContext = dbContext;
             _mapper = mapper;
             _unitOfWork = unitOfWork;
+            _logger = logger;
         }
         /// <summary>
         /// Retrieves a student by Id and give generic response
@@ -32,9 +34,9 @@ namespace MyFirstAPI.Services
             if (record != null)
             {
                 StudentResponseDTO studentResponseDTO = _mapper.Map<StudentResponseDTO>(record);
-                return ServiceResponse<StudentResponseDTO>.SuccessResponse(studentResponseDTO, "Record Found");
+                return ServiceResponse<StudentResponseDTO>.SuccessResponse(studentResponseDTO, ResponseMessages.RecordFound);
             }
-            return ServiceResponse<StudentResponseDTO>.NotFoundResponse($"No record Found with ID {id}");
+            return ServiceResponse<StudentResponseDTO>.NotFoundResponse(ResponseMessages.NotFoundWithId(id));
         }
         /// <summary>
         /// Retrieve all the students from the database and give back data in generic response
@@ -47,7 +49,7 @@ namespace MyFirstAPI.Services
             IEnumerable<Student> allStudents = await _unitOfWork.StudentRepo.GetAllAsync();
             List<StudentResponseDTO> studentResponseData = _mapper.Map<List<StudentResponseDTO>>(allStudents);
 
-            return ServiceResponse<List<StudentResponseDTO>>.SuccessResponse(studentResponseData, "Students Retrieved Successfully");
+            return ServiceResponse<List<StudentResponseDTO>>.SuccessResponse(studentResponseData, ResponseMessages.RecordsFound);
         }
         /// <summary>
         /// create a new student record
@@ -57,12 +59,36 @@ namespace MyFirstAPI.Services
 
         public async Task<ServiceResponse<StudentResponseDTO>> AddStudent(AddStudentDTO dto)
         {
-            Student student = _mapper.Map<Student>(dto);
+            try
+            {
+                Student student = _mapper.Map<Student>(dto);
 
-            Student addStudent = await _unitOfWork.StudentRepo.AddAsync(student);
-            await _unitOfWork.SaveAsync();
-            StudentResponseDTO createdStudent = _mapper.Map<StudentResponseDTO>(addStudent);
-            return ServiceResponse<StudentResponseDTO>.SuccessResponse(createdStudent, "Record Added Successfully");
+                Student addStudent = await _unitOfWork.StudentRepo.AddAsync(student);
+                int saved = await _unitOfWork.SaveAsync();
+                StudentResponseDTO createdStudent = _mapper.Map<StudentResponseDTO>(addStudent);
+                if (saved <= 0)
+                {
+                    //failed to affect/create any record
+                    return ServiceResponse<StudentResponseDTO>.FailResponse(ResponseMessages.AddRecordFailed);
+                }
+                StudentResponseDTO resultDto = _mapper.Map<StudentResponseDTO>(student);
+                return ServiceResponse<StudentResponseDTO>.SuccessResponse(resultDto, "Student added successfully.");
+
+            }
+            catch (DbUpdateException ex)
+            {
+                // e.g. FK violation, unique constraint, etc
+                _logger.LogError(ex, "Database error while adding student");
+                return ServiceResponse<StudentResponseDTO>.FailResponse(
+                "A database error occurred while saving the student. Please check the submitted data.");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unexpected error while adding student");
+                return ServiceResponse<StudentResponseDTO>.FailResponse(
+            "An unexpected error occurred while processing your request.");
+            }
+
 
         }
         /// <summary>
@@ -106,12 +132,35 @@ namespace MyFirstAPI.Services
             }
             else
             {
-                _mapper.Map(updatedStudent, existingStudent);
-                await _unitOfWork.SaveAsync();
-                StudentResponseDTO responseDTO = _mapper.Map<StudentResponseDTO>(existingStudent);
-                return ServiceResponse<StudentResponseDTO>.SuccessResponse(responseDTO,"Record updated");
+                try
+                {
+                    _mapper.Map(updatedStudent, existingStudent);
+                    int responseCode = await _unitOfWork.SaveAsync();
+                    StudentResponseDTO responseDTO = _mapper.Map<StudentResponseDTO>(existingStudent);
+                    if (responseCode <= 0)
+                    {
+                        _logger.LogWarning("Update for student {Id} did not persist any changes", id);
+                        return ServiceResponse<StudentResponseDTO>.FailResponse(ResponseMessages.UpdateFailed);
+                    }
+                    return ServiceResponse<StudentResponseDTO>.SuccessResponse(responseDTO, ResponseMessages.UpdatedSuccessfully);
+
+                }
+                catch (DbUpdateException ex)
+                {
+                    _logger.LogError(ex, "Database error while updating student {Id}", id);
+                    return ServiceResponse<StudentResponseDTO>.FailResponse(
+                        "A database error occurred while updating the student. Please check the submitted data.");
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Unexpected error while updating student {Id}", id);
+                    return ServiceResponse<StudentResponseDTO>.FailResponse(
+                        "An unexpected error occurred while processing your request.");
+                }
+
 
             }
+
 
         }
         /// <summary>
@@ -128,10 +177,10 @@ namespace MyFirstAPI.Services
             if (getRecord.Any())
             {
                 List<StudentResponseDTO> serviceResponseDTO = _mapper.Map<List<StudentResponseDTO>>(getRecord);
-                
-                return ServiceResponse<List<StudentResponseDTO>>.SuccessResponse(serviceResponseDTO,"Record Found");
+
+                return ServiceResponse<List<StudentResponseDTO>>.SuccessResponse(serviceResponseDTO, "Record Found");
             }
-            
+
             return ServiceResponse<List<StudentResponseDTO>>.FailResponse("No record found");
 
         }
@@ -140,10 +189,18 @@ namespace MyFirstAPI.Services
         /// </summary>
         /// <param name="p">the search property, sorting acsending/descending, page and page size</param>
         /// <returns> <see cref="ServiceResponse{Student}"/> containing the matching paginated records</returns>
-        public async Task<ServiceResponse<PagedResult<Student>>> GetStudentQuery(QueryParams p)
+        public async Task<ServiceResponse<PagedResult<StudentResponseDTO>>> GetStudentQuery(QueryParams p)
         {
             PagedResult<Student> result = await _unitOfWork.StudentRepo.GetQueryAsync(p);
-            return ServiceResponse<PagedResult<Student>>.SuccessResponse(result, "Records found");
+            List<StudentResponseDTO> records = _mapper.Map<List<StudentResponseDTO>>(result.Records);
+            PagedResult<StudentResponseDTO> responseResult = new PagedResult<StudentResponseDTO>
+            {
+                Records = records,
+                TotalCount = result.TotalCount,
+                PageNumber = result.PageNumber,
+                PageSize = result.PageSize
+            };
+            return ServiceResponse<PagedResult<StudentResponseDTO>>.SuccessResponse(responseResult, "Records found");
 
         }
     }
