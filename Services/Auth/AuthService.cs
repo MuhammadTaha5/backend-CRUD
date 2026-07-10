@@ -203,8 +203,8 @@ namespace StudentManagement.Services.Auth
             string resetLink = $"{_config["FrontendUrl"]}/api/auth/set-password?userId={user.Id}&token={encodedToken}";
 
             string body = $"<p>Hi {user.FullName},</p><p>Click below to reset your password:</p><a href='{resetLink}'>Reset Password</a>";
-            Console.WriteLine($"TOKEN LENGTH: {token.Length}");
-            Console.WriteLine($"RAW TOKEN: {token}");
+            //Console.WriteLine($"TOKEN LENGTH: {token.Length}");
+            //Console.WriteLine($"RAW TOKEN: {token}");
             await _emailService.SendEmailAsync(user.Email, "Reset your password", body);
             return ServiceResponse<string>.SuccessResponse(null, "Password reset Email sent");
             
