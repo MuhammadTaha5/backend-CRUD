@@ -173,7 +173,6 @@ namespace MyFirstAPI.Services
         {
             List<Student> getRecord = await _dbContext.Students.Where(s => s.Name.Contains(name)).ToListAsync();
 
-
             if (getRecord.Any())
             {
                 List<StudentResponseDTO> serviceResponseDTO = _mapper.Map<List<StudentResponseDTO>>(getRecord);
@@ -193,15 +192,15 @@ namespace MyFirstAPI.Services
         {
             try
             {
-                PagedResult<Student> result = await _unitOfWork.StudentRepo.GetQueryAsync(p);
-                List<StudentResponseDTO> records = _mapper.Map<List<StudentResponseDTO>>(result.Records);
+                (List<Student> result,int totalCount) = await _unitOfWork.StudentRepo.GetQueryAsync(p);
+                List<StudentResponseDTO> records = _mapper.Map<List<StudentResponseDTO>>(result);
         
                 PagedResult<StudentResponseDTO> responseResult = new PagedResult<StudentResponseDTO>
                 {
                     Records = records,
-                    TotalCount = result.TotalCount,
-                    PageNumber = result.PageNumber,
-                    PageSize = result.PageSize
+                    TotalCount = totalCount,
+                    PageNumber = p.Page,
+                    PageSize = p.PageSize
                 };
                 
                 return ServiceResponse<PagedResult<StudentResponseDTO>>.SuccessResponse(responseResult, "Records found");

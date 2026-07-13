@@ -53,7 +53,7 @@ namespace StudentManagement.Repositories
             _dbTable.Update(entity);
         }
 
-        public virtual async Task<DTOs.PagedResult<T>> GetQueryAsync(QueryParams queryParams)
+        public virtual async Task<(List<T> Items, int TotalCount)>GetQueryAsync(QueryParams queryParams)
         {
             IQueryable<T> query = Table;
 
@@ -63,26 +63,15 @@ namespace StudentManagement.Repositories
 
             query = QueryableExtensions<T>.ApplySort(filteredQuery, queryParams.SortBy, queryParams.Desc, SortableProperties);
 
-            return await ToPagedResultAsync(query, queryParams.Page, queryParams.PageSize);
-        }
-        
-        public static async Task<DTOs.PagedResult<T>> ToPagedResultAsync(IQueryable<T> query, int pageNumber, int pageSize)
-        {
             int totalCount = await query.CountAsync();
 
             List<T> items = await query
-                .Skip((pageNumber - 1) * pageSize)
-                .Take(pageSize)
+                .Skip((queryParams.Page - 1) * queryParams.PageSize)
+                .Take(queryParams.PageSize)
                 .ToListAsync();
 
-            return new DTOs.PagedResult<T>
-            {
-                Records = items,
-                TotalCount = totalCount,
-                PageNumber = pageNumber,
-                PageSize = pageSize
-            };
+            return (items, totalCount);
         }
-
+        
     }
 }
