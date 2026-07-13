@@ -145,7 +145,7 @@ namespace MyFirstAPI.Controllers
         /// </summary>
         /// <param name="queryParams">The Search property, filter, sorting</param>
         /// <returns>the filtered, sorted ascending/descending , and paginated records</returns>
-        
+        [AllowAnonymous]
         [HttpGet("query")]
         public async Task<ActionResult> GetStudentQuery([FromQuery] QueryParams queryParams)
         {

@@ -16,6 +16,17 @@ using StudentManagement.Constants;
 
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowFrontend", policy =>
+    {
+        policy.WithOrigins("http://127.0.0.1:5500", "http://localhost:5500") // your Live Server origin
+              .AllowAnyHeader()
+              .AllowAnyMethod();
+    });
+});
+
 // --- Identity ---
 builder.Services.AddIdentity<AppUser, IdentityRole>(options =>
 {
@@ -75,7 +86,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 WebApplication app = builder.Build();
 
-
+app.UseCors("AllowFrontend");   // must be here
 // Enable Swagger
 app.UseSwagger();
 app.UseSwaggerUI();
