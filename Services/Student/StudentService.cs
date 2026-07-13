@@ -191,16 +191,28 @@ namespace MyFirstAPI.Services
         /// <returns> <see cref="ServiceResponse{Student}"/> containing the matching paginated records</returns>
         public async Task<ServiceResponse<PagedResult<StudentResponseDTO>>> GetStudentQuery(QueryParams p)
         {
-            PagedResult<Student> result = await _unitOfWork.StudentRepo.GetQueryAsync(p);
-            List<StudentResponseDTO> records = _mapper.Map<List<StudentResponseDTO>>(result.Records);
-            PagedResult<StudentResponseDTO> responseResult = new PagedResult<StudentResponseDTO>
+            try
             {
-                Records = records,
-                TotalCount = result.TotalCount,
-                PageNumber = result.PageNumber,
-                PageSize = result.PageSize
-            };
-            return ServiceResponse<PagedResult<StudentResponseDTO>>.SuccessResponse(responseResult, "Records found");
+                PagedResult<Student> result = await _unitOfWork.StudentRepo.GetQueryAsync(p);
+                List<StudentResponseDTO> records = _mapper.Map<List<StudentResponseDTO>>(result.Records);
+        
+                PagedResult<StudentResponseDTO> responseResult = new PagedResult<StudentResponseDTO>
+                {
+                    Records = records,
+                    TotalCount = result.TotalCount,
+                    PageNumber = result.PageNumber,
+                    PageSize = result.PageSize
+                };
+                
+                return ServiceResponse<PagedResult<StudentResponseDTO>>.SuccessResponse(responseResult, "Records found");
+
+            }
+            catch (Exception e)
+            {
+                return ServiceResponse<PagedResult<StudentResponseDTO>>.FailResponse(e.Message, null);
+            }
+
+
 
         }
     }

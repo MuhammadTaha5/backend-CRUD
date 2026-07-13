@@ -8,7 +8,7 @@ namespace StudentManagement.Domain.Repositories
 {
     public class StudentRepository : Repository<Student>, IStudentRepository
     {
-        protected override string[] SearchableProperties => new[] { "Name", "Email" };
+        protected override string[] FilterableProperties => new[] { "Name", "Email", "Age", "Gpa"};
         protected override string[] SortableProperties => new[] { "Name", "Gpa", "Age", "Id" };
         public StudentRepository(ApplicationDbContext applicationDbContext) : base(applicationDbContext)
         {

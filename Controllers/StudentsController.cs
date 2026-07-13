@@ -7,7 +7,7 @@ using StudentManagement.Constants;
 
 namespace MyFirstAPI.Controllers
 {
-    [Authorize]    
+    [Authorize]
     [ApiController]
     [Route("api/[controller]")]
     public class StudentsController : ControllerBase
@@ -25,7 +25,7 @@ namespace MyFirstAPI.Controllers
         /// Gets all students
         /// </summary>
         /// <returns>A lists of students wrapped in a <see cref="ServiceResponse{T}"/></returns>
-        
+
         [HttpGet]
         public async Task<ActionResult<List<Student>>> GetStudents()
         {
@@ -79,13 +79,13 @@ namespace MyFirstAPI.Controllers
         /// <response code="401">Caller is not authenticated.</response>
         /// <response code="403">Caller is authenticated but not an Admin.</response>
         [HttpPost]
-        [Authorize(Roles=Roles.Admin)]
+        [Authorize(Roles = Roles.Admin)]
         public async Task<ActionResult<ServiceResponse<StudentResponseDTO>>> AddStudent(AddStudentDTO dto)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
             ServiceResponse<StudentResponseDTO> createStudent = await _studentService.AddStudent(dto);
-            if(createStudent.success)
+            if (createStudent.success)
             {
                 return Ok(createStudent);
             }
@@ -103,8 +103,8 @@ namespace MyFirstAPI.Controllers
         /// <response code="403">Caller is authenticated but not an Admin.</response>
         /// <response code="404">No student exists with the given ID.</response>
         [HttpPut("{studentId}")]
-        [Authorize(Roles=Roles.Admin)]
-        public async Task <ActionResult> UpdateStudent(int studentId, UpdateStudentDTO dto)
+        [Authorize(Roles = Roles.Admin)]
+        public async Task<ActionResult> UpdateStudent(int studentId, UpdateStudentDTO dto)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
@@ -117,8 +117,8 @@ namespace MyFirstAPI.Controllers
             }
             return Ok(updatedStudent);
         }
-        
-    
+
+
         /// <summary>
         /// Delete the Student record with Id
         /// </summary>
@@ -129,7 +129,7 @@ namespace MyFirstAPI.Controllers
         /// <response code="403">Caller is authenticated but not an Admin.</response>
         /// <response code="404">No student exists with the given ID.</response>
         [HttpDelete("{id}")]
-        [Authorize(Roles=Roles.Admin)]
+        [Authorize(Roles = Roles.Admin)]
         public async Task<ActionResult> DeleteStudent(int id)
         {
             ServiceResponse<StudentResponseDTO> deletedStudent = await _studentService.RemoveStudent(id);
@@ -145,12 +145,25 @@ namespace MyFirstAPI.Controllers
         /// </summary>
         /// <param name="queryParams">The Search property, filter, sorting</param>
         /// <returns>the filtered, sorted ascending/descending , and paginated records</returns>
+        
         [HttpGet("query")]
         public async Task<ActionResult> GetStudentQuery([FromQuery] QueryParams queryParams)
         {
             ServiceResponse<PagedResult<StudentResponseDTO>> result = await _studentService.GetStudentQuery(queryParams);
+            if(!result.success)
+            {
+                return BadRequest(result);
+            }
             return Ok(result);
         }
+        
+        /*
+        [HttpGet("query")]
+        public IActionResult Query([FromQuery] QueryParams queryParams)
+        {
+            return Ok(queryParams);
+        }
+        */
 
 
         /// <summary>

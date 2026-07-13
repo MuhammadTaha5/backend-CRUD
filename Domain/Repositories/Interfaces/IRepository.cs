@@ -11,6 +11,7 @@ namespace StudentManagement.Repositories
         Task UpdateAsync(T entity);
         Task <bool> DeleteAsync(T entity);
         Task <bool> ExistsAsync(int id);
+        
         Task<PagedResult<T>> GetQueryAsync(QueryParams queryParams);
 
          

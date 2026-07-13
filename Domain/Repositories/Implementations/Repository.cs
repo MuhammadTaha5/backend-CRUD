@@ -1,22 +1,19 @@
+using System.ComponentModel.DataAnnotations;
 using System.Linq.Dynamic.Core;
 using Microsoft.EntityFrameworkCore;
 using MyFirstAPI.Data;
-using MyFirstAPI.Models;
 using StudentManagement.Domain.Repositories;
 using StudentManagement.DTOs;
 
 namespace StudentManagement.Repositories
 {
-    public class Repository<T> : IRepository<T> where T : class
+    public class Repository<T>(ApplicationDbContext applicationDbContext) : IRepository<T> where T : class
     {
-        private readonly DbSet<T> _dbTable;
-        protected  virtual string[] SearchableProperties { get; }
-        protected virtual string[] SortableProperties { get; }
+        private readonly DbSet<T> _dbTable = applicationDbContext.Set<T>();
+        protected virtual string[] FilterableProperties => Array.Empty<string>();
+        protected virtual string[] SortableProperties { get; } = ["Id"];
         protected virtual string DefaultSort => "Id";
-        public Repository(ApplicationDbContext applicationDbContext)
-        {
-            _dbTable = applicationDbContext.Set<T>();
-        }
+
         protected virtual IQueryable<T> Table => _dbTable;
         public async Task<T> AddAsync(T entity)
         {
@@ -60,29 +57,31 @@ namespace StudentManagement.Repositories
         {
             IQueryable<T> query = Table;
 
-            query = ApplySearch(query, queryParams.Search);
-            query = ApplySort(query, queryParams.SortBy, queryParams.Desc);
+            var (filteredQuery, error) = QueryableExtensions<T>.ApplyFilters(query, queryParams.Filters, FilterableProperties);
+            if (error != null)
+                throw new ValidationException(error);
 
-            return await query.ToPagedResultAsync(queryParams.Page, queryParams.PageSize);
+            query = QueryableExtensions<T>.ApplySort(filteredQuery, queryParams.SortBy, queryParams.Desc, SortableProperties);
+
+            return await ToPagedResultAsync(query, queryParams.Page, queryParams.PageSize);
         }
-        protected virtual IQueryable<T> ApplySearch(IQueryable<T> query, string? search)
+        
+        public static async Task<DTOs.PagedResult<T>> ToPagedResultAsync(IQueryable<T> query, int pageNumber, int pageSize)
         {
-            if (string.IsNullOrWhiteSpace(search) || SearchableProperties.Length == 0)
-                return query;
+            int totalCount = await query.CountAsync();
 
-            string predicate = string.Join(" || ",
-                SearchableProperties.Select(p => $"{p}.ToLower().Contains(@0)"));
+            List<T> items = await query
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
 
-            return query.Where(predicate, search.ToLower());
-        }
-        protected virtual IQueryable<T> ApplySort(IQueryable<T> query, string? sortBy, bool desc)
-        {
-            string field = !string.IsNullOrWhiteSpace(sortBy) &&
-                        SortableProperties.Contains(sortBy, StringComparer.OrdinalIgnoreCase)
-                ? SortableProperties.First(p => p.Equals(sortBy, StringComparison.OrdinalIgnoreCase))
-                : DefaultSort;
-
-            return query.OrderBy(field + (desc ? " descending" : ""));
+            return new DTOs.PagedResult<T>
+            {
+                Records = items,
+                TotalCount = totalCount,
+                PageNumber = pageNumber,
+                PageSize = pageSize
+            };
         }
 
     }
