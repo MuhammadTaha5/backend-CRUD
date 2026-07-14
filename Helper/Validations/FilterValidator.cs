@@ -24,20 +24,20 @@ namespace StudentManagement.Helper.Validations
                 return Fail($"Operator '{filter.Operator}' is not a recognized filter operator.");
 
             // Step 2: property must be in the allow-list
-            var matchedName = filterableProperties.FirstOrDefault(p =>
+            string? matchedName = filterableProperties.FirstOrDefault(p =>
                 string.Equals(p, filter.PropertyName, StringComparison.OrdinalIgnoreCase));
 
             if (matchedName == null)
                 return Fail($"Property '{filter.PropertyName}' is not filterable.");
 
             // Step 3: property must actually exist on the model
-            var prop = typeof(T).GetProperty(matchedName,
+            PropertyInfo? prop = typeof(T).GetProperty(matchedName,
                 BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase);
 
             if (prop == null)
                 return Fail($"Property '{filter.PropertyName}' does not exist on {typeof(T).Name}.");
 
-            var propType = Nullable.GetUnderlyingType(prop.PropertyType) ?? prop.PropertyType;
+            Type? propType = Nullable.GetUnderlyingType(prop.PropertyType) ?? prop.PropertyType;
             bool isString = propType == typeof(string);
             bool isComparable = !isString && typeof(IComparable).IsAssignableFrom(propType);
 

@@ -13,6 +13,7 @@ using StudentManagement.Domain.Repositories;
 using StudentManagement.Services;
 using StudentManagement.Domain.Models;
 using StudentManagement.Constants;
+using StudentManagement.Middlewares;
 
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
@@ -92,7 +93,7 @@ app.UseSwagger();
 app.UseSwaggerUI();
 //app.UseHttpsRedirection();
 
-app.MapControllers();
+
 
 
 // --- Seed roles on startup ---
@@ -105,9 +106,10 @@ using (IServiceScope scope = app.Services.CreateScope())
             await roleManager.CreateAsync(new IdentityRole(role));
     }
 }
-
+app.UseMiddleware<ExceptionMiddleware>();
 app.UseAuthentication(); 
 
 app.UseAuthorization();
+app.MapControllers();
 
 app.Run();

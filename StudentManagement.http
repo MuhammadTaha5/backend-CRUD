@@ -3,4 +3,12 @@
 GET {{MyFirstAPI_HostAddress}}/weatherforecast/
 Accept: application/json
 
+GET http://localhost:5025/api/Student/
+Accept: application/json
+
+GET http://localhost:5025/api/Student/{stdId}
+Accept: application/json
+
+
+
 ###
