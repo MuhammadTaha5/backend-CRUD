@@ -11,7 +11,7 @@ namespace MyFirstAPI.Models
         public int Age { get; set; }
 
         [Required]
-        public string Section { get; set; } = "A";
+        public SectionEnum Section { get; set; } = SectionEnum.C;
 
         [Required]
         [EmailAddress]
