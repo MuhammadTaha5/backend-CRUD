@@ -156,14 +156,17 @@ namespace MyFirstAPI.Controllers
             }
             return Ok(result);
         }
-        
-        /*
-        [HttpGet("query")]
-        public IActionResult Query([FromQuery] QueryParams queryParams)
+        [HttpPost("query")]
+        public async Task<ActionResult> GetQueryResult([FromBody] QueryParams queryParams)
         {
-            return Ok(queryParams);
+            ServiceResponse<PagedResult<StudentResponseDTO>> result = await _studentService.GetStudentQuery(queryParams);
+            if(!result.success)
+            {
+                return BadRequest(result);
+            }
+            return Ok(result);
         }
-        */
+        
 
 
         /// <summary>

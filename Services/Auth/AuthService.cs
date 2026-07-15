@@ -126,6 +126,7 @@ namespace StudentManagement.Services.Auth
             {
                 throw new NotFoundException("User Not Found");
             }
+            //if already email confirmed throw exception
             if (user.EmailConfirmed)
             {
                 throw new ConflictException("Account already verfied");
@@ -134,14 +135,17 @@ namespace StudentManagement.Services.Auth
             if (!confirmAccount.Succeeded)
             {
                 List<string> errors = confirmAccount.Errors.Select(e => e.Description).ToList();
+                //Console the errors
                 Console.WriteLine("CONFIRM EMAIL ERRORS: " + string.Join(" | ", errors));
                 throw new ValidationException(errors);
             }
             string token = await _userManager.GeneratePasswordResetTokenAsync(user);
+            //token to console temporary for using in resquest without decoding
             string encodedToken = WebUtility.UrlEncode(token);
             Console.WriteLine($"TOKEN LENGTH: {token.Length}");
+            //displat raw token
             Console.WriteLine($"RAW TOKEN: {token}");
-
+            //Send generic response for confirmation
             return ServiceResponse<object>.SuccessResponse(new
                 {
                     userId = user.Id,

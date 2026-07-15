@@ -8,7 +8,8 @@ public class AutoMapperProfile : Profile
     {
         CreateMap<Student, StudentResponseDTO>();
         CreateMap<AddStudentDTO, Student>();
-        CreateMap<UpdateStudentDTO, Student>();
+        CreateMap<UpdateStudentDTO, Student>()
+    .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
         CreateMap<RegisterDTO, AppUser>();
 
     }
