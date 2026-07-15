@@ -45,6 +45,7 @@ namespace StudentManagement.Services.Auth
             AppUser? user = await _userManager.FindByEmailAsync(loginDTO.Email);
             if (user == null)
             {
+                
                 throw new UnauthorizedAccessException("Invalid credentials");
             }
             if (await _userManager.IsLockedOutAsync(user))
@@ -87,7 +88,9 @@ namespace StudentManagement.Services.Auth
                 throw new ConflictException("User Already Registered");
             }
             AppUser user = _mapper.Map<AppUser>(dto);
+            //Setting the username to email
             user.UserName = dto.Email;    
+
             user.EmailConfirmed = false;
             IdentityResult? result = await _userManager.CreateAsync(user);
             if (!result.Succeeded)
