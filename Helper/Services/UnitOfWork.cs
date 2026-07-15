@@ -15,6 +15,10 @@ namespace StudentManagement
             _dbContext = applicationDb;
             this.StudentRepo = StudentRepo;
         }
+        /// <summary>
+        /// saves changes to database
+        /// </summary>
+        /// <returns> <see cref="{int}"/>states of database response</returns>
         public async Task<int> SaveAsync()
         => await _dbContext.SaveChangesAsync();
 

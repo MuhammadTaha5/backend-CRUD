@@ -123,7 +123,7 @@ namespace MyFirstAPI.Services
         public async Task<ServiceResponse<StudentResponseDTO>> UpdateStudent(int id, UpdateStudentDTO updatedStudent)
         {
             // Find existing student
-            Student? existingStudent = await _dbContext.Students.FindAsync(id);
+            Student? existingStudent = await _unitOfWork.StudentRepo.GetByIdAsync(id);
 
             // If not found
             if (existingStudent == null)
@@ -137,6 +137,7 @@ namespace MyFirstAPI.Services
                     _mapper.Map(updatedStudent, existingStudent);
                     int responseCode = await _unitOfWork.SaveAsync();
                     StudentResponseDTO responseDTO = _mapper.Map<StudentResponseDTO>(existingStudent);
+                    //if responsecode is less than 0 means no record updated
                     if (responseCode <= 0)
                     {
                         _logger.LogWarning("Update for student {Id} did not persist any changes", id);

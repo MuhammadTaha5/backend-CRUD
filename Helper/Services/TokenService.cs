@@ -14,7 +14,12 @@ namespace MyFirstAPI.Services
         {
             _config = config;
         }
-
+        /// <summary>
+        /// this generates the jwt token used to access resource and protected endpoints
+        /// </summary>
+        /// <param name="user">The user which successfully validated credentials</param>
+        /// <param name="roles">Roles to add in jwt token</param>
+        /// <returns></returns>
         public string GenerateAccessToken(AppUser user, IList<string> roles)
         {
             List<Claim> claims = new List<Claim>

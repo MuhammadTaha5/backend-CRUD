@@ -15,6 +15,14 @@ public class SmtpEmailService : IEmailService
         _settings = settings.Value;
         _logger = logger;
     }
+    /// <summary>
+    /// sets up MimeMessage, and place sending email, sending to person, and body and subject
+    /// of email =
+    /// </summary>
+    /// <param name="toEmail">address of person to which sending</param>
+    /// <param name="subject">The Subject of email</param>
+    /// <param name="htmlBody">Message inside the email</param>
+    /// <returns>thrown exception if not sent successfully</returns>
 
     public async Task SendEmailAsync(string toEmail, string subject, string htmlBody)
     {
