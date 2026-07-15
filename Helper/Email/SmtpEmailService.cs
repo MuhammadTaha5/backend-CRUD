@@ -18,14 +18,14 @@ public class SmtpEmailService : IEmailService
 
     public async Task SendEmailAsync(string toEmail, string subject, string htmlBody)
     {
-        var message = new MimeMessage();
+        MimeMessage message = new MimeMessage();
         message.From.Add(new MailboxAddress(_settings.FromName, _settings.FromEmail));
         message.To.Add(MailboxAddress.Parse(toEmail));
         message.Subject = subject;
 
         message.Body = new BodyBuilder { HtmlBody = htmlBody }.ToMessageBody();
 
-        using var client = new SmtpClient();
+        using SmtpClient client = new SmtpClient();
         try
         {
             await client.ConnectAsync(_settings.Host, _settings.Port, SecureSocketOptions.StartTls);

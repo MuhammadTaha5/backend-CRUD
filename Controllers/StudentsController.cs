@@ -3,6 +3,7 @@ using MyFirstAPI.Services;
 using MyFirstAPI.Models;
 using Microsoft.AspNetCore.Authorization;
 using StudentManagement.DTOs;
+using StudentManagement.Constants;
 
 namespace MyFirstAPI.Controllers
 {
@@ -23,14 +24,14 @@ namespace MyFirstAPI.Controllers
         [HttpGet]
         public async Task<ActionResult<List<Student>>> GetStudents()
         {
-            var studentsRecord = await _studentService.GetAllStudents();
+            ServiceResponse<List<StudentResponseDTO>> studentsRecord = await _studentService.GetAllStudents();
 
             return Ok(studentsRecord);
         }
         [HttpGet("{stdId}")]
         public async Task<ActionResult> GetStudentById(int stdId)
         {
-            var studentsRecord = await _studentService.GetStudentById(stdId);
+            ServiceResponse<StudentResponseDTO> studentsRecord = await _studentService.GetStudentById(stdId);
             if (!studentsRecord.success)
             {
                 return NotFound(studentsRecord);
@@ -38,16 +39,13 @@ namespace MyFirstAPI.Controllers
             return Ok(studentsRecord);
         }
         [HttpGet("search")]
-        public async Task<ActionResult<Models.Student>> GetStudentByName(string name, int id)
+        public async Task<ActionResult<Student>> GetStudentByName(string name, int id)
         {
-            //Console.WriteLine($"Id: {id}");
             if (string.IsNullOrEmpty(name))
             {
                 return BadRequest("Name is required");
             }
-
-            //Console.WriteLine("Name: " + name);
-            var studentRecord = await _studentService.GetStudentByName(name);
+            ServiceResponse<List<StudentResponseDTO>> studentRecord = await _studentService.GetStudentByName(name);
             Console.Write(studentRecord.Data);
             if (!studentRecord.success)
             {
@@ -56,41 +54,35 @@ namespace MyFirstAPI.Controllers
             return Ok(studentRecord);
         }
         [HttpPost]
-        [Authorize(Roles="Admin")]
+        [Authorize(Roles=Roles.Admin)]
         public async Task<ActionResult<ServiceResponse<StudentResponseDTO>>> AddStudent(AddStudentDTO dto)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            var result = await _studentService.AddStudent(dto);
-
-
-
+            ServiceResponse<StudentResponseDTO> result = await _studentService.AddStudent(dto);
             return Ok(result);
         }
         [HttpPut("{studentId}")]
-        [Authorize(Roles="Admin")]
+        [Authorize(Roles=Roles.Admin)]
         public async Task <ActionResult> UpdateStudent(int studentId, UpdateStudentDTO dto)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            var updatedStudent = await _studentService.UpdateStudent(studentId, dto);
-
+            ServiceResponse<StudentResponseDTO> updatedStudent = await _studentService.UpdateStudent(studentId, dto);
 
             if (!updatedStudent.success)
             {
-                return NotFound($"No student found with ID {studentId}");
+                return NotFound(updatedStudent);
             }
-
-
             return Ok(updatedStudent);
         }
         [HttpDelete("{id}")]
-        [Authorize(Roles="Admin")]
+        [Authorize(Roles=Roles.Admin)]
         public async Task<ActionResult> DeleteStudent(int id)
         {
-            var deletedStudent = await _studentService.RemoveStudent(id);
+            ServiceResponse<StudentResponseDTO> deletedStudent = await _studentService.RemoveStudent(id);
             if (!deletedStudent.success)
             {
                 return NotFound(deletedStudent);

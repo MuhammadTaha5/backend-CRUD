@@ -12,9 +12,10 @@ using StudentManagement;
 using StudentManagement.Domain.Repositories;
 using StudentManagement.Services;
 using StudentManagement.Domain.Models;
+using StudentManagement.Constants;
 
 
-var builder = WebApplication.CreateBuilder(args);
+WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 // --- Identity ---
 builder.Services.AddIdentity<AppUser, IdentityRole>(options =>
 {
@@ -30,8 +31,8 @@ builder.Services.AddIdentity<AppUser, IdentityRole>(options =>
 .AddDefaultTokenProviders();
 
 // --- JWT Authentication ---
-var jwtSettings = builder.Configuration.GetSection("JwtSettings");
-var secret = jwtSettings["Secret"]!;
+IConfigurationSection jwtSettings = builder.Configuration.GetSection("JwtSettings");
+string secret = jwtSettings["Secret"]!;
 
 builder.Services.AddAuthentication(options =>
 {
@@ -61,7 +62,6 @@ builder.Services.AddScoped<IEmailService, SmtpEmailService>();
 builder.Services.AddSwaggerGen();
 builder.Services.AddControllers();
 
-builder.Services.AddOpenApi();
 
 
 builder.Services.AddScoped<IStudentService, StudentService>();
@@ -73,12 +73,7 @@ builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IStudentRepository, StudentRepository>();
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
-var app = builder.Build();
-
-if (app.Environment.IsDevelopment())
-{
-    app.MapOpenApi();
-}
+WebApplication app = builder.Build();
 
 
 // Enable Swagger
@@ -90,17 +85,17 @@ app.MapControllers();
 
 
 // --- Seed roles on startup ---
-using (var scope = app.Services.CreateScope())
+using (IServiceScope scope = app.Services.CreateScope())
 {
-    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
-    foreach (var role in new[] { "Admin", "Student", "Teacher" })
+    RoleManager<IdentityRole> roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+    foreach (string role in Roles.All)
     {
         if (!await roleManager.RoleExistsAsync(role))
             await roleManager.CreateAsync(new IdentityRole(role));
     }
 }
 
-app.UseAuthentication(); // must be BEFORE UseAuthorization
+app.UseAuthentication(); 
 
 app.UseAuthorization();
 

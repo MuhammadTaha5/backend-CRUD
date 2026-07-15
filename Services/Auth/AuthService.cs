@@ -1,8 +1,10 @@
 using System.Net;
+using AutoMapper;
 using Microsoft.AspNetCore.Identity;
 using MyFirstAPI.Models;
 using MyFirstAPI.Models.DTOs;
 using MyFirstAPI.Services;
+using StudentManagement.Constants;
 using StudentManagement.DTOs;
 using StudentManagement.Exceptions;
 
@@ -15,16 +17,30 @@ namespace StudentManagement.Services.Auth
         private readonly TokenService _tokenService;
         private readonly IConfiguration _config;
         private readonly IEmailService _emailService;
-        public AuthService(IConfiguration config, TokenService tokenService, UserManager<AppUser> userManager, IEmailService emailService)
+        private readonly IMapper _mapper;
+        public AuthService(IConfiguration config, TokenService tokenService, 
+                            UserManager<AppUser> userManager, IEmailService emailService, 
+                            IMapper mapper)
         {
             _userManager = userManager;
             _tokenService = tokenService;
             _config = config;
             _emailService = emailService;
+            _mapper = mapper;
         }
-        public async Task<AuthResponseDTO> Login(LoginDTO loginDTO)
+        /// <summary>
+        /// Authenticates a user by email and password and returning a jwt access token on success
+        /// </summary>
+        /// <param name="loginDTO">The Login Credentials(email and Password)</param>
+        /// <returns> A <see cref="ServiceResponse{AuthResponseDTO}" containing the access token and user info </returns>
+        /// <exception cref="UnauthorizedAccessException">
+        /// Thrown exception of unauthorized if the email or password not correct and also 
+        /// if the account is locked
+        /// </exception>
+        /// 
+        public async Task<ServiceResponse<AuthResponseDTO>> Login(LoginDTO loginDTO)
         {
-            var user = await _userManager.FindByEmailAsync(loginDTO.Email);
+            AppUser? user = await _userManager.FindByEmailAsync(loginDTO.Email);
             if (user == null)
             {
                 throw new UnauthorizedAccessException("Invalid credentials");
@@ -32,7 +48,7 @@ namespace StudentManagement.Services.Auth
             if (await _userManager.IsLockedOutAsync(user))
                 throw new UnauthorizedAccessException("Account locked. Try again later.");
 
-            var passwordValid = await _userManager.CheckPasswordAsync(user, loginDTO.Password);
+            bool passwordValid = await _userManager.CheckPasswordAsync(user, loginDTO.Password);
             if (!passwordValid)
             {
                 await _userManager.AccessFailedAsync(user);
@@ -41,58 +57,67 @@ namespace StudentManagement.Services.Auth
 
             // reset fail count on success
             await _userManager.ResetAccessFailedCountAsync(user);
+            //get roles of user from db
+            IList<string> roles = await _userManager.GetRolesAsync(user);
+            //generate access token
+            string accessToken = _tokenService.GenerateAccessToken(user, roles);
 
-            var roles = await _userManager.GetRolesAsync(user);
-            var accessToken = _tokenService.GenerateAccessToken(user, roles);
-
-            return (new AuthResponseDTO
-            {
+            return ServiceResponse<AuthResponseDTO>.SuccessResponse(new AuthResponseDTO{
                 AccessToken = accessToken,
                 Email = user.Email!,
                 FullName = user.FullName
-            });
+            },"Logged in Successfully");
         }
-
+        /// <summary>
+        /// Register A user without password and send verification Link through email with
+        /// it user set the password
+        /// </summary>
+        /// <param name="dto">The Registration Details Email, Username, and contact number</param>
+        /// <returns><see cref="ServiceResponse{RegisterDTO}"/> confirming the account is created and verifcation enail is sent</returns>
+        /// <exception cref="ConflictException">Throws if the email already exist</exception>
+        /// <exception cref="ValidationException">thrown if db fails to insert user in db</exception>
+        /// 
         public async Task<ServiceResponse<RegisterDTO>> RegisterUser(RegisterDTO dto)
         {
-            var existingUser = await _userManager.FindByEmailAsync(dto.Email);
+            AppUser? existingUser = await _userManager.FindByEmailAsync(dto.Email);
             if (existingUser != null)
             {
                 throw new ConflictException("User Already Registered");
             }
-            AppUser user = new AppUser
-            {
-                UserName = dto.Email,
-                Email = dto.Email,
-                FullName = dto.FullName,
-                EmailConfirmed = false
-            };
-            var result = await _userManager.CreateAsync(user);
+            AppUser user = _mapper.Map<AppUser>(dto);
+            user.EmailConfirmed = false;
+            IdentityResult? result = await _userManager.CreateAsync(user);
             if (!result.Succeeded)
             {
-                var errors = result.Errors.Select(e => e.Description);
+                IEnumerable<string>? errors = result.Errors.Select(e => e.Description);
                 throw new ValidationException(errors);
             }
-            var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
-            var encodedToken = WebUtility.UrlEncode(token);
-            var confirmLink = $"{_config["FrontendUrl"]}/api/auth/confirm-email?userId={user.Id}&token={encodedToken}";
+            string token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+            string encodedToken = WebUtility.UrlEncode(token);
+            string confirmLink = $"{_config["FrontendUrl"]}/api/auth/confirm-email?userId={user.Id}&token={encodedToken}";
 
-            var body = $"<p>Hi {user.FullName},</p><p>Click below to set your password and activate your account:</p><a href='{confirmLink}'>Confirm Account</a>";
+            string body = $"<p>Hi {user.FullName},</p><p>Click below to set your password and activate your account:</p><a href='{confirmLink}'>Confirm Account</a>";
 
-            await _emailService.SendEmailAsync(user.Email, "Confirm your account", body);
+            await _emailService.SendEmailAsync(dto.Email, "Confirm your account", body);
 
-            Console.WriteLine($"TOKEN LENGTH: {token.Length}");
-            Console.WriteLine($"RAW TOKEN: {token}");
-            return new ServiceResponse<RegisterDTO>
-            {
-                Message = "User Created and Verification. Email Sent.",
-                success = true,
-                Data = dto
-            };
+            return  ServiceResponse<RegisterDTO>.SuccessResponse(dto, "User Created. Verification Email Sent.");
+            
         }
+        /// <summary>
+        /// Confirm if the email is active by sending back the token and user id and 
+        /// validating in db
+        /// 
+        /// </summary>
+        /// <param name="dto">User ID, and email verification token</param>
+        /// <returns><see cref="ServiceResponse{Object}"/> confirming email is verified and set 
+        /// password token is generated.
+        /// </returns>
+        /// <exception cref="NotFoundException">thrown if no user exist with param user id</exception>
+        /// <exception cref="ConflictException">thrown if the user is already verified.</exception>
+        /// <exception cref="ValidationException">thrown it the token is not validated.</exception>
         public async Task<ServiceResponse<Object>> ConfirmEmail(ConfirmEmailDto dto)
         {
-            var user = await _userManager.FindByIdAsync(dto.UserId);
+            AppUser? user = await _userManager.FindByIdAsync(dto.UserId);
             if (user == null)
             {
                 throw new NotFoundException("User Not Found");
@@ -101,30 +126,77 @@ namespace StudentManagement.Services.Auth
             {
                 throw new ConflictException("Account already verfied");
             }
-            var confirmAccount = await _userManager.ConfirmEmailAsync(user, dto.Token);
+            IdentityResult confirmAccount = await _userManager.ConfirmEmailAsync(user, dto.Token);
             if (!confirmAccount.Succeeded)
             {
-                var errors = confirmAccount.Errors.Select(e => e.Description).ToList();
+                List<string> errors = confirmAccount.Errors.Select(e => e.Description).ToList();
                 Console.WriteLine("CONFIRM EMAIL ERRORS: " + string.Join(" | ", errors));
                 throw new ValidationException(errors);
             }
-            var token = await _userManager.GeneratePasswordResetTokenAsync(user);
-            var encodedToken = WebUtility.UrlEncode(token);
+            string token = await _userManager.GeneratePasswordResetTokenAsync(user);
+            string encodedToken = WebUtility.UrlEncode(token);
+            Console.WriteLine($"TOKEN LENGTH: {token.Length}");
+            Console.WriteLine($"RAW TOKEN: {token}");
 
-            return new ServiceResponse<object>
-            {
-                Data = new
+            return ServiceResponse<object>.SuccessResponse(new
                 {
                     userId = user.Id,
                     token = encodedToken
-                },
-                success = true,
-                Message = "Account Confirmed"
-            };
+                }, "Email Confirmed");
+            
 
         }
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="dto"></param>
+        /// <returns></returns>
+        /// <exception cref="NotFoundException"></exception>
+        /// <exception cref="ValidationException"></exception>
+        public async Task<ServiceResponse<AuthResponseDTO>> SetPassword(SetPasswordDto dto)
+        {
+            AppUser? user = await _userManager.FindByIdAsync(dto.UserId);
+            if (user==null)
+            {
+                throw new NotFoundException("No User Found");
+            }
+            IdentityResult setPassword = await _userManager.ResetPasswordAsync(user, dto.Token, dto.Password);
+            if (!setPassword.Succeeded)
+            {
+                List<string> errors = setPassword.Errors.Select(e => e.Description).ToList();
+                Console.WriteLine("Password ERRORS: " + string.Join(" | ", errors));
+                throw new ValidationException(errors);
+            }
+            await _userManager.AddToRoleAsync(user, Roles.Student);
+            string accessToken = _tokenService.GenerateAccessToken(user, new List<string>{"Student"});
 
+            return ServiceResponse<AuthResponseDTO>.SuccessResponse(new AuthResponseDTO
+                {
+                    AccessToken = accessToken,
+                    Email = user.Email,
+                    FullName = user.FullName
+                }, "Logged in Successfully. Token Generated");
+            
+        }
+        public async Task<ServiceResponse<string>> ForgotPassword(ForgotPasswordDto dto)
+        {
+            AppUser? user = await _userManager.FindByEmailAsync(dto.Email);
+            if (user==null || !user.EmailConfirmed)
+            {
+                throw new ValidationException(new List<string>{"Password reset failed"});
+            }
+            string token = await _userManager.GeneratePasswordResetTokenAsync(user);
+            string encodedToken = WebUtility.UrlEncode(token);
 
+            string resetLink = $"{_config["FrontendUrl"]}/api/auth/set-password?userId={user.Id}&token={encodedToken}";
+
+            string body = $"<p>Hi {user.FullName},</p><p>Click below to reset your password:</p><a href='{resetLink}'>Reset Password</a>";
+            Console.WriteLine($"TOKEN LENGTH: {token.Length}");
+            Console.WriteLine($"RAW TOKEN: {token}");
+            await _emailService.SendEmailAsync(user.Email, "Reset your password", body);
+            return ServiceResponse<string>.SuccessResponse(null, "Password reset Email sent");
+            
+        }
 
     }
 }

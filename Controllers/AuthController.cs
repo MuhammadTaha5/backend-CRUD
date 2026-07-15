@@ -1,3 +1,4 @@
+using Azure;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -25,21 +26,21 @@ public class AuthController : ControllerBase
 
     // POST api/auth/login
     [HttpPost("login")]
-    public async Task<ActionResult<AuthResponseDTO>> Login(LoginDTO dto)
+    public async Task<ActionResult<ServiceResponse<AuthResponseDTO>>> Login(LoginDTO dto)
     {
         if (!ModelState.IsValid)
             return BadRequest(ModelState);
         try
         {
-            var serviceResponse = await _authService.Login(dto);
+            ServiceResponse<AuthResponseDTO> serviceResponse = await _authService.Login(dto);
             return Ok(serviceResponse);
 
         }
         catch (UnauthorizedAccessException excep)
         {
-            return Unauthorized(new { message = excep.Message });
+            return Unauthorized(ServiceResponse<string>.FailResponse(excep.Message, null));
         }
-    
+
 
     }
     [HttpPost("registerUser")]
@@ -47,19 +48,17 @@ public class AuthController : ControllerBase
     {
         try
         {
-            var registerUser = await _authService.RegisterUser(dto);
+            ServiceResponse<RegisterDTO> registerUser = await _authService.RegisterUser(dto);
             return Ok(registerUser);
         }
         catch (ConflictException e)
         {
-            return Conflict(e.Message);
+            return Conflict(ServiceResponse<string>.FailResponse(e.Message, null));
         }
         catch (Exception e)
         {
-            return BadRequest(e.Message);
+            return BadRequest(ServiceResponse<string>.FailResponse(e.Message, null));
         }
-
-
     }
 
     [HttpGet("confirm-email")]
@@ -77,20 +76,59 @@ public class AuthController : ControllerBase
                 UserId = userId,
                 Token = token
             };
-            var userConfirm = await _authService.ConfirmEmail(confirmEmail);
+            ServiceResponse<object> userConfirm = await _authService.ConfirmEmail(confirmEmail);
             return Ok(userConfirm);
         }
         catch (Exception e)
         {
-            return BadRequest(new ServiceResponse<String>
-            {
-                success = false,
-                Data = null,
-                Message = e.Message
-            });
+            return BadRequest(ServiceResponse<string>.FailResponse(e.Message, null));
         }
 
     }
+    [HttpPost("set-password")]
+    [AllowAnonymous]
+    public async Task<ActionResult<ServiceResponse<AuthService>>> SetPassword([FromBody] SetPasswordDto setPasswordDto)
+    {
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(ModelState);
+        }
+        try
+        {
+            ServiceResponse<AuthResponseDTO> setPassword = await _authService.SetPassword(setPasswordDto);
+            return Ok(setPassword);
+        }
+        catch (ValidationException e)
+        {
+            return BadRequest(e.Message);
+        }
+        catch (NotFoundException e)
+        {
+            return BadRequest(ServiceResponse<string>.FailResponse(e.Message, null));
+        }
+
+
+
+    }
+    [HttpPost("forgot-password")]
+    [AllowAnonymous]
+    public async Task<IActionResult> ForgotPassword(ForgotPasswordDto dto)
+    {
+        try
+        {
+            ServiceResponse<string> response = await _authService.ForgotPassword(dto);
+            return Ok(response);
+            
+        }
+        catch (Exception e)
+        {
+            return BadRequest(ServiceResponse<string>.FailResponse(e.Message, null));
+            
+        }
+  
+    }
+
+
     [HttpPost("test-email")]
     [AllowAnonymous]
     public async Task<IActionResult> TestEmail([FromServices] IEmailService emailService, [FromQuery] string email)
