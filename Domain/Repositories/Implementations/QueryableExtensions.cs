@@ -9,6 +9,15 @@ namespace StudentManagement.Domain.Repositories
 {
     public static class QueryableExtensions<T>
     {
+        /// <summary>
+        /// This takes query and filters to apply, and build the query with the help of 
+        /// property name, property value and operator
+        /// </summary>
+        /// <param name="query"></param>
+        /// <param name="filters">list of filter dictionary having filter name, operator, value</param>
+        /// <param name="FilterableProperties">List of all properties on which filtering can be done</param>
+        /// <returns> <see cref="{IQueryable query, Error}"/>to fetch result from Db </returns>
+        /// <exception cref="InvalidOperationException">thrown if operator doesnt matches</exception>
         public static (IQueryable<T> Query, string? Error) ApplyFilters(
             IQueryable<T> query, List<FilterCriteria>? filters,string[] FilterableProperties)
         {
@@ -20,6 +29,7 @@ namespace StudentManagement.Domain.Repositories
 
             foreach (var filter in filters)
             {
+                //Checks the filter name, operator, value is fine
                 var result = FilterValidator.Validate<T>(filter, FilterableProperties);
 
                 if (!result.IsValid)
@@ -27,7 +37,7 @@ namespace StudentManagement.Domain.Repositories
 
                 var propName = result.Property!.Name;
                 var idx = values.Count;
-
+                //develops the query based on filter operator
                 string clause = filter.Operator switch
                 {
                     FilterOperator.Eq => $"{propName} == @{idx}",
@@ -51,7 +61,14 @@ namespace StudentManagement.Domain.Repositories
             string predicate = string.Join(" && ", clauses);
             return (query.Where(predicate, values.ToArray()), null);
         }
-        
+        /// <summary>
+        /// Add the apply filter section to query
+        /// </summary>
+        /// <param name="query"></param>
+        /// <param name="sortBy">the atribute to defind on which to sort</param>
+        /// <param name="desc">describes the direction of sort(true, false)</param>
+        /// <param name="SortableProperties">List of allowed sortable properties</param>
+        /// <returns> <see cref="{IQueryable{T}}"/>with the string attached</returns>
         public static IQueryable<T> ApplySort(IQueryable<T> query, string? sortBy, bool desc, string[] SortableProperties)
         {
             string field = !string.IsNullOrWhiteSpace(sortBy) &&

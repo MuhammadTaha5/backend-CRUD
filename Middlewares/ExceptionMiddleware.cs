@@ -21,7 +21,7 @@ namespace StudentManagement.Middlewares
             catch (Exception ex)
             {
                 context.Response.StatusCode = 500;
-                await context.Response.WriteAsync(JsonSerializer.Serialize(ServiceResponse<string>.FailResponse("Something went wrong.", null)));
+                await context.Response.WriteAsync(JsonSerializer.Serialize(ServiceResponse<string>.FailResponse($"Something went wrong. {ex.Message}", null)));
             }
         }
     }

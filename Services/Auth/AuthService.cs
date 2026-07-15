@@ -1,5 +1,6 @@
 using System.Net;
 using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using MyFirstAPI.Models;
 using MyFirstAPI.Models.DTOs;
@@ -7,6 +8,7 @@ using MyFirstAPI.Services;
 using StudentManagement.Constants;
 using StudentManagement.DTOs;
 using StudentManagement.Exceptions;
+using StudentManagement.Helper.Email;
 
 namespace StudentManagement.Services.Auth
 {
@@ -76,7 +78,7 @@ namespace StudentManagement.Services.Auth
         /// <returns><see cref="ServiceResponse{RegisterDTO}"/> confirming the account is created and verifcation enail is sent</returns>
         /// <exception cref="ConflictException">Throws if the email already exist</exception>
         /// <exception cref="ValidationException">thrown if db fails to insert user in db</exception>
-        /// 
+        [Authorize(Roles =Roles.Admin)]
         public async Task<ServiceResponse<RegisterDTO>> RegisterUser(RegisterDTO dto)
         {
             AppUser? existingUser = await _userManager.FindByEmailAsync(dto.Email);
@@ -85,18 +87,20 @@ namespace StudentManagement.Services.Auth
                 throw new ConflictException("User Already Registered");
             }
             AppUser user = _mapper.Map<AppUser>(dto);
+            user.UserName = dto.Email;    
             user.EmailConfirmed = false;
             IdentityResult? result = await _userManager.CreateAsync(user);
             if (!result.Succeeded)
             {
                 IEnumerable<string>? errors = result.Errors.Select(e => e.Description);
+                Console.WriteLine($"Errors: {string.Join(", ", errors)}");
                 throw new ValidationException(errors);
             }
             string token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
             string encodedToken = WebUtility.UrlEncode(token);
             string confirmLink = $"{_config["FrontendUrl"]}/api/auth/confirm-email?userId={user.Id}&token={encodedToken}";
 
-            string body = $"<p>Hi {user.FullName},</p><p>Click below to set your password and activate your account:</p><a href='{confirmLink}'>Confirm Account</a>";
+            string body = EmailTemplates.ActivateAccount(user.FullName, confirmLink);
 
             await _emailService.SendEmailAsync(dto.Email, "Confirm your account", body);
 
@@ -202,9 +206,9 @@ namespace StudentManagement.Services.Auth
 
             string resetLink = $"{_config["FrontendUrl"]}/api/auth/set-password?userId={user.Id}&token={encodedToken}";
 
-            string body = $"<p>Hi {user.FullName},</p><p>Click below to reset your password:</p><a href='{resetLink}'>Reset Password</a>";
-            //Console.WriteLine($"TOKEN LENGTH: {token.Length}");
-            //Console.WriteLine($"RAW TOKEN: {token}");
+            string body = EmailTemplates.PasswordReset(user.FullName, resetLink);
+            Console.WriteLine($"TOKEN LENGTH: {token.Length}");
+            Console.WriteLine($"RAW TOKEN: {token}");
             await _emailService.SendEmailAsync(user.Email, "Reset your password", body);
             return ServiceResponse<string>.SuccessResponse(null, "Password reset Email sent");
             
