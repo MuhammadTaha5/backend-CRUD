@@ -1,5 +1,8 @@
 namespace StudentManagement.Domain.Models
 {
+    /// <summary>
+    /// takes host, port number, username and passwords from secrets
+    /// </summary>
     public class EmailSettings
     {
         public string Host { get; set; }

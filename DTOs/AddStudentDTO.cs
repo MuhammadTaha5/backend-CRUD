@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using MyFirstAPI.Models;
 
 public class AddStudentDTO
 {
@@ -13,7 +14,7 @@ public class AddStudentDTO
     public double Gpa { get; set; }
 
     [Required]
-    public string Section { get; set; } = "A";
+    public SectionEnum Section { get; set; } = SectionEnum.A;
 
     [Required]
     [EmailAddress]

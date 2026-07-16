@@ -13,9 +13,21 @@ using StudentManagement.Domain.Repositories;
 using StudentManagement.Services;
 using StudentManagement.Domain.Models;
 using StudentManagement.Constants;
+using StudentManagement.Middlewares;
 
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowFrontend", policy =>
+    {
+        policy.WithOrigins("http://127.0.0.1:5500", "http://localhost:5500") // your Live Server origin
+              .AllowAnyHeader()
+              .AllowAnyMethod();
+    });
+});
+
 // --- Identity ---
 builder.Services.AddIdentity<AppUser, IdentityRole>(options =>
 {
@@ -75,13 +87,13 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 WebApplication app = builder.Build();
 
-
+app.UseCors("AllowFrontend");   // must be here
 // Enable Swagger
 app.UseSwagger();
 app.UseSwaggerUI();
 //app.UseHttpsRedirection();
 
-app.MapControllers();
+
 
 
 // --- Seed roles on startup ---
@@ -94,9 +106,10 @@ using (IServiceScope scope = app.Services.CreateScope())
             await roleManager.CreateAsync(new IdentityRole(role));
     }
 }
-
+app.UseMiddleware<ExceptionMiddleware>();
 app.UseAuthentication(); 
 
 app.UseAuthorization();
+app.MapControllers();
 
 app.Run();

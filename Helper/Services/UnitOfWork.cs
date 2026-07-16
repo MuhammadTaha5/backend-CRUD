@@ -10,11 +10,15 @@ namespace StudentManagement
         private readonly ApplicationDbContext _dbContext;
         public IRepository<Student> StudentRepo { get; }
         
-        public UnitOfWork(ApplicationDbContext applicationDb)
+        public UnitOfWork(ApplicationDbContext applicationDb, IStudentRepository StudentRepo  )
         {
             _dbContext = applicationDb;
-            StudentRepo = new StudentRepository(applicationDb);
+            this.StudentRepo = StudentRepo;
         }
+        /// <summary>
+        /// saves changes to database
+        /// </summary>
+        /// <returns> <see cref="{int}"/>states of database response</returns>
         public async Task<int> SaveAsync()
         => await _dbContext.SaveChangesAsync();
 

@@ -11,7 +11,7 @@ namespace MyFirstAPI.Services
         public Task<ServiceResponse<StudentResponseDTO>> RemoveStudent(int id);
         public Task<ServiceResponse<StudentResponseDTO>> UpdateStudent(int id, UpdateStudentDTO student);
         public Task<ServiceResponse<List<StudentResponseDTO>>> GetStudentByName(string name);
-        public Task<ServiceResponse<PagedResult<Student>>>GetStudentQuery(QueryParams p);
+        public Task<ServiceResponse<PagedResult<StudentResponseDTO>>>GetStudentQuery(QueryParams p);
 
     
     }
