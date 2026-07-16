@@ -1,7 +1,9 @@
 using System.ComponentModel.DataAnnotations;
 using System.Linq.Dynamic.Core;
+using System.Reflection;
 using Microsoft.EntityFrameworkCore;
 using MyFirstAPI.Data;
+using StudentManagement.Attributes;
 using StudentManagement.Domain.Repositories;
 using StudentManagement.DTOs;
 
@@ -10,11 +12,22 @@ namespace StudentManagement.Repositories
     public class Repository<T>(ApplicationDbContext applicationDbContext) : IRepository<T> where T : class
     {
         private readonly DbSet<T> _dbTable = applicationDbContext.Set<T>();
-        protected virtual string[] FilterableProperties => Array.Empty<string>();
-        protected virtual string[] SortableProperties { get; } = ["Id"];
+        //protected virtual string[] FilterableProperties => Array.Empty<string>();
+        //protected virtual string[] SortableProperties { get; } = ["Id"];
         protected virtual string DefaultSort => "Id";
 
         protected virtual IQueryable<T> Table => _dbTable;
+
+        protected virtual string[] FilterableProperties =>
+        typeof(T).GetProperties()
+        .Where(p => p.IsDefined(typeof(FilterableAttribute)))
+        .Select(p => p.Name)
+        .ToArray();
+        protected virtual string[] SortableProperties =>
+        typeof(T).GetProperties()
+        .Where(p => p.IsDefined(typeof(SortableAttribute)))
+        .Select(p => p.Name)
+        .ToArray();
         /// <summary>
         /// Adds a new entity to the underlying table's change tracker.
         /// </summary>
@@ -121,6 +134,7 @@ namespace StudentManagement.Repositories
 
             return (items, totalCount);
         }
+
         
     }
 }

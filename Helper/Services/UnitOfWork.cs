@@ -10,7 +10,7 @@ namespace StudentManagement
         private readonly ApplicationDbContext _dbContext;
         public IRepository<Student> StudentRepo { get; }
         
-        public UnitOfWork(ApplicationDbContext applicationDb, IStudentRepository StudentRepo  )
+        public UnitOfWork(ApplicationDbContext applicationDb, IRepository<Student> StudentRepo)
         {
             _dbContext = applicationDb;
             this.StudentRepo = StudentRepo;
