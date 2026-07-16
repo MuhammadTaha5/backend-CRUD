@@ -16,6 +16,11 @@ namespace MyFirstAPI.Models
         [Required]
         [EmailAddress]
         public string Email { get; set; } = string.Empty;
+        [Required]
+        [Range(0.0, 4.0)]
+        public double Gpa { get; set; }
+        [Required]
+        public string Department { get; set; } = string.Empty;
 
     }
 }
