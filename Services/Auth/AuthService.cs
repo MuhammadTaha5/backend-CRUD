@@ -174,7 +174,7 @@ namespace StudentManagement.Services.Auth
                 throw new NotFoundException("No User Found");
             }
             IdentityResult setPassword = await _userManager.ResetPasswordAsync(user, dto.Token, dto.Password);
-            //if token not validated or issue in setting new password.
+            
             if (!setPassword.Succeeded)
             {
                 List<string> errors = setPassword.Errors.Select(e => e.Description).ToList();
