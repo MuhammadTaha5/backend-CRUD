@@ -40,12 +40,11 @@ namespace StudentManagement.Services.Auth
         /// if the account is locked
         /// </exception>
         /// 
-        public async Task<ServiceResponse<AuthResponseDTO>> Login(LoginDTO loginDTO)
+        public async Task<AuthResponseDTO> Login(LoginDTO loginDTO)
         {
             AppUser? user = await _userManager.FindByEmailAsync(loginDTO.Email);
             if (user == null)
             {
-                
                 throw new UnauthorizedAccessException("Invalid credentials");
             }
             if (await _userManager.IsLockedOutAsync(user))
@@ -65,11 +64,11 @@ namespace StudentManagement.Services.Auth
             //generate access token
             string accessToken = _tokenService.GenerateAccessToken(user, roles);
 
-            return ServiceResponse<AuthResponseDTO>.SuccessResponse(new AuthResponseDTO{
+            return new AuthResponseDTO{
                 AccessToken = accessToken,
                 Email = user.Email!,
                 FullName = user.FullName
-            },"Logged in Successfully");
+            };
         }
         /// <summary>
         /// Register A user without password and send verification Link through email with
@@ -80,7 +79,7 @@ namespace StudentManagement.Services.Auth
         /// <exception cref="ConflictException">Throws if the email already exist</exception>
         /// <exception cref="ValidationException">thrown if db fails to insert user in db</exception>
         [Authorize(Roles =Roles.Admin)]
-        public async Task<ServiceResponse<RegisterDTO>> RegisterUser(RegisterDTO dto)
+        public async Task<RegisterDTO> RegisterUser(RegisterDTO dto)
         {
             AppUser? existingUser = await _userManager.FindByEmailAsync(dto.Email);
             if (existingUser != null)
@@ -107,7 +106,7 @@ namespace StudentManagement.Services.Auth
 
             await _emailService.SendEmailAsync(dto.Email, "Confirm your account", body);
 
-            return  ServiceResponse<RegisterDTO>.SuccessResponse(dto, "User Created. Verification Email Sent.");
+            return dto;
             
         }
         /// <summary>
@@ -122,7 +121,7 @@ namespace StudentManagement.Services.Auth
         /// <exception cref="NotFoundException">thrown if no user exist with param user id</exception>
         /// <exception cref="ConflictException">thrown if the user is already verified.</exception>
         /// <exception cref="ValidationException">thrown it the token is not validated.</exception>
-        public async Task<ServiceResponse<Object>> ConfirmEmail(ConfirmEmailDto dto)
+        public async Task<Object> ConfirmEmail(ConfirmEmailDto dto)
         {
             AppUser? user = await _userManager.FindByIdAsync(dto.UserId);
             if (user == null)
@@ -149,11 +148,11 @@ namespace StudentManagement.Services.Auth
             //displat raw token
             Console.WriteLine($"RAW TOKEN: {token}");
             //Send generic response for confirmation
-            return ServiceResponse<object>.SuccessResponse(new
+            return new
                 {
                     userId = user.Id,
                     token = encodedToken
-                }, "Email Confirmed");
+                };
             
 
         }
@@ -166,7 +165,7 @@ namespace StudentManagement.Services.Auth
         /// </returns>
         /// <exception cref="NotFoundException">thrown if no user exist with this Id.</exception>
         /// <exception cref="ValidationException">thrown if the password reset token is not validated.</exception>
-        public async Task<ServiceResponse<AuthResponseDTO>> SetPassword(SetPasswordDto dto)
+        public async Task<AuthResponseDTO> SetPassword(SetPasswordDto dto)
         {
             AppUser? user = await _userManager.FindByIdAsync(dto.UserId);
             if (user==null)
@@ -184,12 +183,12 @@ namespace StudentManagement.Services.Auth
             await _userManager.AddToRoleAsync(user, Roles.Student);
             string accessToken = _tokenService.GenerateAccessToken(user, new List<string>{"Student"});
 
-            return ServiceResponse<AuthResponseDTO>.SuccessResponse(new AuthResponseDTO
+            return new AuthResponseDTO
                 {
                     AccessToken = accessToken,
                     Email = user.Email,
                     FullName = user.FullName
-                }, "Logged in Successfully. Token Generated");
+                };
             
         }
         /// <summary>
@@ -201,7 +200,7 @@ namespace StudentManagement.Services.Auth
         /// </param>
         /// <returns> <see cref="ServiceResponse{string}" /> confirming the email was sent.</returns>
         /// <exception cref="ValidationException">Thown if the token validation or any other setting password error occurs</exception>
-        public async Task<ServiceResponse<string>> ForgotPassword(ForgotPasswordDto dto)
+        public async Task<string> ForgotPassword(ForgotPasswordDto dto)
         {
             AppUser? user = await _userManager.FindByEmailAsync(dto.Email);
             if (user==null || !user.EmailConfirmed)
@@ -217,7 +216,7 @@ namespace StudentManagement.Services.Auth
             Console.WriteLine($"TOKEN LENGTH: {token.Length}");
             Console.WriteLine($"RAW TOKEN: {token}");
             await _emailService.SendEmailAsync(user.Email, "Reset your password", body);
-            return ServiceResponse<string>.SuccessResponse(null, "Password reset Email sent");
+            return "Password reset Email sent";
             
         }
 

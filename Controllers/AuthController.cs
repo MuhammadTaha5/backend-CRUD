@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MyFirstAPI.Models;
 using MyFirstAPI.Models.DTOs;
+using StudentManagement.Controllers;
 using StudentManagement.DTOs;
 using StudentManagement.Exceptions;
 using StudentManagement.Services;
@@ -9,7 +10,7 @@ using StudentManagement.Services.Auth;
 
 [ApiController]
 [Route("api/[controller]")]
-public class AuthController : ControllerBase
+public class AuthController : BaseApiController
 {
     private readonly IAuthService _authService;
     private readonly IConfiguration _config;
@@ -29,14 +30,12 @@ public class AuthController : ControllerBase
 
     // POST api/auth/login
     [HttpPost("login")]
-    public async Task<ActionResult<ServiceResponse<AuthResponseDTO>>> Login(LoginDTO dto)
+    public async Task<IActionResult> Login(LoginDTO dto)
     {
-        if (!ModelState.IsValid)
-            return BadRequest(ModelState);
         try
         {
-            ServiceResponse<AuthResponseDTO> serviceResponse = await _authService.Login(dto);
-            return Ok(serviceResponse);
+            AuthResponseDTO serviceResponse = await _authService.Login(dto);
+            return OkResponse(serviceResponse, "Logged-in Successfully");
 
         }
         catch (UnauthorizedAccessException excep)
@@ -56,8 +55,8 @@ public class AuthController : ControllerBase
     {
         try
         {
-            ServiceResponse<RegisterDTO> registerUser = await _authService.RegisterUser(dto);
-            return Ok(registerUser);
+            RegisterDTO registerUser = await _authService.RegisterUser(dto);
+            return OkResponse(registerUser, "Registered Successfully, Email Sent");
         }
         catch (ConflictException e)
         {
@@ -76,21 +75,13 @@ public class AuthController : ControllerBase
     /// <returns>The confirmation message and Set password token if successfull. Else give the bad request</returns>
     [HttpGet("confirm-email")]
     [AllowAnonymous]
-    public async Task<ActionResult> ConfirmEmail([FromQuery] string userId, [FromQuery] string token)
+    public async Task<IActionResult> ConfirmEmail([FromQuery] string userId, [FromQuery] string token)
     {
-        if (!ModelState.IsValid)
-        {
-            return BadRequest(ModelState);
-        }
         try
         {
-            ConfirmEmailDto confirmEmail = new ConfirmEmailDto
-            {
-                UserId = userId,
-                Token = token
-            };
-            ServiceResponse<object> userConfirm = await _authService.ConfirmEmail(confirmEmail);
-            return Ok(userConfirm);
+            ConfirmEmailDto confirmEmail = new ConfirmEmailDto{UserId = userId,Token = token};
+            object userConfirm = await _authService.ConfirmEmail(confirmEmail);
+            return OkResponse(userConfirm, "Email Confirmed. Use Token to set Password");
         }
         catch (Exception e)
         {
@@ -106,16 +97,12 @@ public class AuthController : ControllerBase
     /// <returns>the success message of password set and generate the access token. if not then give bad request response</returns>
     [HttpPost("set-password")]
     [AllowAnonymous]
-    public async Task<ActionResult<ServiceResponse<AuthService>>> SetPassword([FromBody] SetPasswordDto setPasswordDto)
+    public async Task<IActionResult> SetPassword([FromBody] SetPasswordDto setPasswordDto)
     {
-        if (!ModelState.IsValid)
-        {
-            return BadRequest(ModelState);
-        }
         try
         {
-            ServiceResponse<AuthResponseDTO> setPassword = await _authService.SetPassword(setPasswordDto);
-            return Ok(setPassword);
+            AuthResponseDTO setPassword = await _authService.SetPassword(setPasswordDto);
+            return OkResponse(setPassword, "Token Generated, Logged-in Successfully");
         }
         catch (ValidationException e)
         {
@@ -142,8 +129,8 @@ public class AuthController : ControllerBase
     {
         try
         {
-            ServiceResponse<string> response = await _authService.ForgotPassword(dto);
-            return Ok(response);
+            string response = await _authService.ForgotPassword(dto);
+            return OkResponse(response, "Reset Password Email Sent");
             
         }
         catch (Exception e)
