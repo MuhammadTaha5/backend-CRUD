@@ -14,6 +14,7 @@ using StudentManagement.Services;
 using StudentManagement.Domain.Models;
 using StudentManagement.Constants;
 using StudentManagement.Middlewares;
+using Microsoft.AspNetCore.Mvc;
 
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
@@ -26,6 +27,22 @@ builder.Services.AddCors(options =>
               .AllowAnyHeader()
               .AllowAnyMethod();
     });
+});
+builder.Services.Configure<ApiBehaviorOptions>(options =>
+{
+    options.InvalidModelStateResponseFactory = context =>
+    {
+        var errors = context.ModelState
+            .Where(e => e.Value.Errors.Count > 0)
+            .SelectMany(e => e.Value.Errors.Select(err => err.ErrorMessage))
+            .ToList();
+
+        var errorMessage = string.Join(" | ", errors);
+
+        var response = ServiceResponse<string>.FailResponse(errorMessage, null);
+
+        return new BadRequestObjectResult(response);
+    };
 });
 
 // --- Identity ---
@@ -73,7 +90,21 @@ builder.Services.AddScoped<IEmailService, SmtpEmailService>();
 
 builder.Services.AddSwaggerGen();
 builder.Services.AddControllers();
+builder.Services.AddControllers();
 
+builder.Services.Configure<ApiBehaviorOptions>(options =>
+{
+    options.InvalidModelStateResponseFactory = context =>
+    {
+        var errors = context.ModelState
+            .Where(e => e.Value.Errors.Count > 0)
+            .SelectMany(e => e.Value.Errors.Select(err => err.ErrorMessage))
+            .ToList();
+
+        return new BadRequestObjectResult(
+            ServiceResponse<string>.FailResponse(string.Join(" | ", errors), null));
+    };
+});
 
 
 builder.Services.AddScoped<IStudentService, StudentService>();

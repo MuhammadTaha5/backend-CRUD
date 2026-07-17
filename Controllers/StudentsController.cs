@@ -4,13 +4,15 @@ using MyFirstAPI.Models;
 using Microsoft.AspNetCore.Authorization;
 using StudentManagement.DTOs;
 using StudentManagement.Constants;
+using StudentManagement.Controllers;
+using StudentManagement.Helper.Constants;
 
 namespace MyFirstAPI.Controllers
 {
     [Authorize]
     [ApiController]
     [Route("api/[controller]")]
-    public class StudentsController : ControllerBase
+    public class StudentsController : BaseApiController
     {
         private IStudentService _studentService;
         private readonly ILogService _service1;
@@ -27,11 +29,11 @@ namespace MyFirstAPI.Controllers
         /// <returns>A lists of students wrapped in a <see cref="ServiceResponse{T}"/></returns>
 
         [HttpGet]
-        public async Task<ActionResult<List<Student>>> GetStudents()
+        public async Task<IActionResult> GetStudents()
         {
-            ServiceResponse<List<StudentResponseDTO>> studentsRecord = await _studentService.GetAllStudents();
+            List<StudentResponseDTO> studentsRecord = await _studentService.GetAllStudents();
 
-            return Ok(studentsRecord);
+            return OkResponse(studentsRecord, ResponseMessages.RecordsFound);
         }
         /// <summary>
         /// Gets a single student by ID.
@@ -41,14 +43,10 @@ namespace MyFirstAPI.Controllers
         /// <response code="200">Student found and returned.</response>
         /// <response code="404">No student exists with the given ID.</response>
         [HttpGet("{stdId}")]
-        public async Task<ActionResult> GetStudentById(int stdId)
+        public async Task<IActionResult> GetStudentById(int stdId)
         {
-            ServiceResponse<StudentResponseDTO> studentsRecord = await _studentService.GetStudentById(stdId);
-            if (!studentsRecord.success)
-            {
-                return NotFound(studentsRecord);
-            }
-            return Ok(studentsRecord);
+            StudentResponseDTO studentsRecord = await _studentService.GetStudentById(stdId);
+            return OkResponse(studentsRecord, ResponseMessages.RecordFound);
         }
         /// <summary>
         /// Geta student records with matching names.
@@ -56,19 +54,14 @@ namespace MyFirstAPI.Controllers
         /// <param name="name">The name of Student to find</param>
         /// <returns> <see cref="ServiceResponse{List{StudentResponseDTO}}"/>containing the list of students with matching names </returns>
         [HttpGet("search")]
-        public async Task<ActionResult<Student>> GetStudentByName(string name)
+        public async Task<IActionResult> GetStudentByName(string name)
         {
             if (string.IsNullOrEmpty(name))
             {
                 return BadRequest(ServiceResponse<string>.FailResponse("Name is required", null));
             }
-            ServiceResponse<List<StudentResponseDTO>> studentRecord = await _studentService.GetStudentByName(name);
-            Console.Write(studentRecord.Data);
-            if (!studentRecord.success)
-            {
-                return NotFound(studentRecord);
-            }
-            return Ok(studentRecord);
+            List<StudentResponseDTO> studentRecord = await _studentService.GetStudentByName(name);
+            return OkResponse(studentRecord, ResponseMessages.RecordsFound);
         }
         /// <summary>
         ///Create student record in database. Admin only endpoint.
@@ -80,16 +73,12 @@ namespace MyFirstAPI.Controllers
         /// <response code="403">Caller is authenticated but not an Admin.</response>
         [HttpPost]
         [Authorize(Roles = Roles.Admin)]
-        public async Task<ActionResult<ServiceResponse<StudentResponseDTO>>> AddStudent(AddStudentDTO dto)
+        public async Task<IActionResult> AddStudent(AddStudentDTO dto)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
-            ServiceResponse<StudentResponseDTO> createStudent = await _studentService.AddStudent(dto);
-            if (createStudent.success)
-            {
-                return Ok(createStudent);
-            }
-            return BadRequest(createStudent);
+            StudentResponseDTO createStudent = await _studentService.AddStudent(dto);
+            return OkResponse(createStudent, ResponseMessages.AddedSuccessfully);
         }
         /// <summary>
         /// Updates the record of students with id, new fields. Admin only endpoint
@@ -104,18 +93,10 @@ namespace MyFirstAPI.Controllers
         /// <response code="404">No student exists with the given ID.</response>
         [HttpPut("{studentId}")]
         [Authorize(Roles = Roles.Admin)]
-        public async Task<ActionResult> UpdateStudent(int studentId, UpdateStudentDTO dto)
+        public async Task<IActionResult> UpdateStudent(int studentId, UpdateStudentDTO dto)
         {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
-
-            ServiceResponse<StudentResponseDTO> updatedStudent = await _studentService.UpdateStudent(studentId, dto);
-
-            if (!updatedStudent.success)
-            {
-                return NotFound(updatedStudent);
-            }
-            return Ok(updatedStudent);
+            StudentResponseDTO updatedStudent = await _studentService.UpdateStudent(studentId, dto);
+            return OkResponse(updatedStudent, ResponseMessages.UpdatedSuccessfully);
         }
 
 
@@ -130,15 +111,11 @@ namespace MyFirstAPI.Controllers
         /// <response code="404">No student exists with the given ID.</response>
         [HttpDelete("{id}")]
         [Authorize(Roles = Roles.Admin)]
-        public async Task<ActionResult> DeleteStudent(int id)
+        public async Task<IActionResult> DeleteStudent(int id)
         {
-            ServiceResponse<StudentResponseDTO> deletedStudent = await _studentService.RemoveStudent(id);
-            if (!deletedStudent.success)
-            {
-                return NotFound(deletedStudent);
-            }
+            StudentResponseDTO deletedStudent = await _studentService.RemoveStudent(id);
 
-            return Ok(deletedStudent);
+            return OkResponse(deletedStudent, ResponseMessages.RemovedSuccessfully);
         }
         /// <summary>
         /// gets record based on query parameter
@@ -147,24 +124,18 @@ namespace MyFirstAPI.Controllers
         /// <returns>the filtered, sorted ascending/descending , and paginated records</returns>
         [AllowAnonymous]
         [HttpGet("query")]
-        public async Task<ActionResult> GetStudentQuery([FromQuery] QueryParams queryParams)
+        public async Task<IActionResult> GetStudentQuery([FromQuery] QueryParams queryParams)
         {
-            ServiceResponse<PagedResult<StudentResponseDTO>> result = await _studentService.GetStudentQuery(queryParams);
-            if(!result.success)
-            {
-                return BadRequest(result);
-            }
-            return Ok(result);
+            PagedResult<StudentResponseDTO> result = await _studentService.GetStudentQuery(queryParams);
+            
+            return OkResponse(result, ResponseMessages.RecordsFound);
         }
         [HttpPost("query")]
-        public async Task<ActionResult> GetQueryResult([FromBody] QueryParams queryParams)
+        public async Task<IActionResult> GetQueryResult([FromBody] QueryParams queryParams)
         {
-            ServiceResponse<PagedResult<StudentResponseDTO>> result = await _studentService.GetStudentQuery(queryParams);
-            if(!result.success)
-            {
-                return BadRequest(result);
-            }
-            return Ok(result);
+            PagedResult<StudentResponseDTO> result = await _studentService.GetStudentQuery(queryParams);
+            
+            return OkResponse(result, ResponseMessages.RecordsFound);
         }
         
 
